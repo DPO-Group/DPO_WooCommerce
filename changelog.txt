@@ -1,0 +1,40 @@
+= 1.0.11 - October 17, 2019 =
+  * WooCommerce 3 Support
+  * Fix broken 'Pay Now' link in WooCommerce emails
+  * Change DPO Group branding
+  * Move to GitHub
+
+= 1.0.10 - August 23, 2019 =
+  *  Multisite activation improvements
+
+= 1.0.9 =
+  *  Updated DPO default checkout image
+
+= 1.0.8 =
+  *  Added to cURL SSL version 6 and DPO URL version to 6
+
+= 1.0.7 =
+  *  Banner images and text updated.
+
+= 1.0.6 =
+  * Order status bug fixed.
+
+= 1.0.5 =
+  * Bug fix.
+
+= 1.0.4 =
+ * Added checkout image and image url settings fields to 3G Direct Pay settings.
+
+= 1.0.3 =
+ * Bug fix.
+
+= 1.0.2 =
+ * Removed service description from product settings.
+
+= 1.0.1 =
+ * Add: 3G URL input.
+ * Add: PTL Type select box.
+ * Add: PTL input.
+
+= 1.0.0 =
+ * First Public Release.
