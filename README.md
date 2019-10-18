@@ -1,5 +1,5 @@
 # WooCommerce
-This is the DPO plugin for WooCommerce.
+This is the DPO Group plugin for WooCommerce.
 
 # DPO_WooCommerce
 ## DPO Group WooCommerce plugin v1.0.11 for WooCommerce v3.6.4
