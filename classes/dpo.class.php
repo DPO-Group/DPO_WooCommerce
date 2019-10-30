@@ -1,54 +1,54 @@
 <?php
 /*
-* Copyright (c) DPO Group
-*
-* Author: App Inlet (Pty) Ltd
-*
-* Released under the GNU General Public License
-*/
+ * Copyright (c) DPO Group
+ *
+ * Author: App Inlet (Pty) Ltd
+ *
+ * Released under the GNU General Public License
+ */
 
 if ( !defined( 'ABSPATH' ) ) {
-exit; // Exit if accessed directly
+    exit; // Exit if accessed directly
 }
 
 /**
-* DPO Group Gateway
-*
-* Provides a DPO Group Payment Gateway.
-*
-* @class       woocommerce_paygate
-* @package     WooCommerce
-* @category    Payment Gateways
-* @author      DPO Group
-*
-*/
+ * DPO Group Gateway
+ *
+ * Provides a DPO Group Payment Gateway.
+ *
+ * @class       woocommerce_paygate
+ * @package     WooCommerce
+ * @category    Payment Gateways
+ * @author      DPO Group
+ *
+ */
 class WC_Gateway_DPO extends WC_Payment_Gateway
 {
 
-    const VERSION_DPO = '1.0.12';
+    const VERSION_DPO = '1.0.13';
 
     public function __construct()
     {
 
-        $this->id           = 'woocommerce_dpo';
-        $this->plugin_url   = trailingslashit( plugin_dir_url( $this->file ) );
-        $this->icon         = $this->plugin_url . 'woocommerce-gateway-direct-pay-online/assets/images/logo.svg';
-        $this->has_fields   = true;
-        $this->method_title = 'DPO Group';
+        $this->id                 = 'woocommerce_dpo';
+        $this->plugin_url         = trailingslashit( plugin_dir_url( $this->file ) );
+        $this->icon               = $this->plugin_url . 'woocommerce-gateway-direct-pay-online/assets/images/logo.svg';
+        $this->has_fields         = true;
+        $this->method_title       = 'DPO Group';
         $this->method_description = __( 'This payment gateway works by sending the customer to DPO Group to complete their payment.', 'paygate' );
         $this->init_form_fields();
         $this->init_settings();
 
         // Define user set variables in settings
-        $this->enabled        = $this->get_option( 'enabled' );
-        $this->title          = $this->get_option( 'title' );
-        $this->description    = $this->get_option( 'description' );
-        $this->company_token  = $this->get_option( 'company_token' );
-        $this->reduce_stock   = $this->get_option( 'reduce_stock' );
-        $this->url            = $this->get_option( 'dpo_url' );
-        $this->ptl_type       = $this->get_option( 'ptl_type' );
-        $this->ptl            = $this->get_option( 'ptl' );
-        $this->image_url      = $this->get_option( 'image_url' );
+        $this->enabled           = $this->get_option( 'enabled' );
+        $this->title             = $this->get_option( 'title' );
+        $this->description       = $this->get_option( 'description' );
+        $this->company_token     = $this->get_option( 'company_token' );
+        $this->successful_status = $this->get_option( 'successful_status' );
+        $this->url               = $this->get_option( 'dpo_url' );
+        $this->ptl_type          = $this->get_option( 'ptl_type' );
+        $this->ptl               = $this->get_option( 'ptl' );
+        $this->image_url         = $this->get_option( 'image_url' );
 
         // Save options
         if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) ) {
@@ -67,7 +67,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
     {
 
         $this->form_fields = array(
-            'enabled'        => array(
+            'enabled'           => array(
                 'title'       => __( 'Enable/Disable', 'woocommerce' ),
                 'label'       => __( 'Enable DPO Group Gateway', 'woocommerce' ),
                 'type'        => 'checkbox',
@@ -75,32 +75,32 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                 'desc_tip'    => true,
                 'default'     => 'no',
             ),
-            'title'          => array(
+            'title'             => array(
                 'title'       => __( 'Title', 'paygate' ),
                 'type'        => 'text',
                 'description' => __( 'This controls the title which the user sees during checkout.', 'paygate' ),
                 'desc_tip'    => false,
                 'default'     => __( 'DPO Payment Gateway', 'woocommerce' ),
             ),
-            'description'    => array(
+            'description'       => array(
                 'title'       => __( 'Description', 'woocommerce' ),
                 'type'        => 'textarea',
                 'description' => __( 'This controls the description which the user sees during checkout.', 'paygate' ),
                 'default'     => 'Pay via DPO Group',
             ),
-            'company_token'  => array(
+            'company_token'     => array(
                 'title'       => __( 'Company Token', 'woocommerce' ),
                 'type'        => 'text',
                 'description' => __( 'You need to receive token number from DPO Group gateway', 'woocommerce' ),
                 'placeholder' => __( 'For Example: 57466282-EBD7-4ED5-B699-8659330A6996', 'woocommerce' ),
                 'desc_tip'    => true,
             ),
-            'dpo_url'         => array(
+            'dpo_url'           => array(
                 'title'    => __( 'DPO Group URL', 'woocommerce' ),
                 'type'     => 'text',
                 'desc_tip' => true,
             ),
-            'ptl_type'       => array(
+            'ptl_type'          => array(
                 'title'       => __( 'PTL Type ( Optional )', 'woocommerce' ),
                 'type'        => 'select',
                 'description' => __( 'Define payment time limit  tag is hours or minutes.', 'woocommerce' ),
@@ -110,18 +110,22 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                 ),
                 'default'     => 'hours',
             ),
-            'ptl'            => array(
+            'ptl'               => array(
                 'title'       => __( 'PTL ( Optional )', 'woocommerce' ),
                 'type'        => 'text',
                 'description' => __( 'Define number of hours to payment time limit', 'woocommerce' ),
                 'desc_tip'    => true,
             ),
-            'reduce_stock'   => array(
-                'title'       => __( 'Manage Stock', 'woocommerce' ),
-                'type'        => 'checkbox',
-                'label'       => __( 'Reduce Stock Automatically', 'woocommerce' ),
-                'description' => __( 'The stock will be reduced automatically, after successful payment.', 'woocommerce' ),
-                'default'     => 'yes',
+            'successful_status' => array(
+                'title'       => __( 'Successful Order Status', 'woocommerce' ),
+                'type'        => 'select',
+                'description' => __( 'Define order status if transaction successful. If "On Hold", stock will NOT be reduced automaticlly.', 'woocommerce' ),
+                'options'     => array(
+                    'processing' => __( 'Processing', 'woocommerce' ),
+                    'completed'  => __( 'Completed', 'woocommerce' ),
+                    'on-hold'    => __( 'On Hold', 'woocommerce' ),
+                ),
+                'default'     => 'processing',
             ),
 
         );
@@ -196,7 +200,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
             'country'    => '<customerCountry>' . $order->get_billing_country() . '</customerCountry>',
             'ptl_type'   => ( $this->ptl_type == 'minutes' ) ? '<PTLtype>minutes</PTLtype>' : "",
             'ptl'        => ( !empty( $this->ptl ) ) ? '<PTL>' . $this->ptl . '</PTL>' : "",
-            'currency'   => $this->check_woocommerce_currency($order->get_currency()),
+            'currency'   => $this->check_woocommerce_currency( $order->get_currency() ),
         );
 
         // Save payment parametres to session
@@ -209,10 +213,10 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
     }
 
     // Check the WooCommerce currency
-    public function check_woocommerce_currency($currency)
+    public function check_woocommerce_currency( $currency )
     {
         // Check if CFA
-        if ($currency === 'CFA') {
+        if ( $currency === 'CFA' ) {
             $currency = 'XOF';
         }
         return $currency;
@@ -328,14 +332,20 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
 
             $order = wc_get_order( $order_id );
 
+            // Check selected order status workflow
             if ( $response->Result[0] == '000' ) {
-
-                // Reduce stock levels
-                if ( $this->reduce_stock == 'yes' ) {
-                    $order->update_status( 'processing', __( 'The transaction paid successfully and waiting for approval.', 'woocommerce' ) );
-                    $order->payment_complete();
-                } else {
-                    $order->update_status( 'on-hold', __( 'The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. ', 'woocommerce' ) );
+                switch ( $this->successful_status ) {
+                    case 'on-hold':
+                        $order->update_status( 'on-hold', __( 'The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. ', 'woocommerce' ) );
+                        break;
+                    case 'completed':
+                        $order->update_status( 'completed', __( 'The transaction paid successfully and order approved.', 'woocommerce' ) );
+                        $order->payment_complete();
+                        break;
+                    default:
+                        $order->update_status( 'processing', __( 'The transaction paid successfully and waiting for approval.', 'woocommerce' ) );
+                        $order->payment_complete();
+                        break;
                 }
 
             } else {
@@ -379,10 +389,11 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
 
     /**
      * get_icon
-     * 
+     *
      * Add SVG icon to checkout
      */
-    public function get_icon() {
+    public function get_icon()
+    {
         $icon_url = $this->icon;
         $icon     = '<img src="' . WC_HTTPS::force_https_url( $this->icon ) . '" alt="' . esc_attr( $this->get_title() ) . '" style="width: auto !important; height: 25px !important; border: none !important;">';
 

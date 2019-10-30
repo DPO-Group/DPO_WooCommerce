@@ -1,3 +1,7 @@
+= 1.0.13 - October 31, 2019 =
+  * Add order status workflow to settings. PLEASE NOTE: If you had previously selected
+  'Reduce Stock Automatically' to 'no', change your order status setting to 'on-hold'.
+
 = 1.0.12 - October 30, 2019 =
   * Push XOF if CFA selected.
 
