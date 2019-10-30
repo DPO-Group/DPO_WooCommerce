@@ -2,12 +2,12 @@
 This is the DPO Group plugin for WooCommerce.
 
 # DPO_WooCommerce
-## DPO Group WooCommerce plugin v1.0.12 for WooCommerce v3.6.4
+## DPO Group WooCommerce plugin v1.0.13 for WooCommerce v3.6.4
 
 This is the DPO Group plugin for WooCommerce. Please feel free to contact the [DPO Group support team](https://www.directpay.online/support/) should you require any assistance.
 
 ## Installation
-Please navigate to the [releases page](https://github.com/DirectPay-Online/DPO_WooCommerce/releases), download the latest release (v1.0.12) and unzip. You will them be able to follow the integration guide PDF which is included in the zip.
+Please navigate to the [releases page](https://github.com/DirectPay-Online/DPO_WooCommerce/releases), download the latest release (v1.0.13) and unzip. You will them be able to follow the integration guide PDF which is included in the zip.
 
 ## Collaboration
 
