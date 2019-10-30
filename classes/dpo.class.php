@@ -25,7 +25,7 @@ exit; // Exit if accessed directly
 class WC_Gateway_DPO extends WC_Payment_Gateway
 {
 
-    const VERSION_DPO = '1.0.11';
+    const VERSION_DPO = '1.0.12';
 
     public function __construct()
     {
@@ -196,7 +196,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
             'country'    => '<customerCountry>' . $order->get_billing_country() . '</customerCountry>',
             'ptl_type'   => ( $this->ptl_type == 'minutes' ) ? '<PTLtype>minutes</PTLtype>' : "",
             'ptl'        => ( !empty( $this->ptl ) ) ? '<PTL>' . $this->ptl . '</PTL>' : "",
-            'currency'   => get_woocommerce_currency(),
+            'currency'   => $this->check_woocommerce_currency($order->get_currency()),
         );
 
         // Save payment parametres to session
@@ -206,6 +206,16 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
         $response = $this->create_send_xml_request( $param, $order, $order_id );
 
         return $response;
+    }
+
+    // Check the WooCommerce currency
+    public function check_woocommerce_currency($currency)
+    {
+        // Check if CFA
+        if ($currency === 'CFA') {
+            $currency = 'XOF';
+        }
+        return $currency;
     }
 
     // Create xml and send by curl return response
