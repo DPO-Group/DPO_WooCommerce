@@ -1,17 +1,20 @@
+= 1.0.12 - October 30, 2019 =
+  * Push XOF if CFA selected.
+
 = 1.0.11 - October 17, 2019 =
-  * WooCommerce 3 Support
-  * Fix broken 'Pay Now' link in WooCommerce emails
-  * Change DPO Group branding
-  * Move to GitHub
+  * WooCommerce 3 Support.
+  * Fix broken 'Pay Now' link in WooCommerce emails.
+  * Change DPO Group branding.
+  * Move to GitHub.
 
 = 1.0.10 - August 23, 2019 =
-  *  Multisite activation improvements
+  *  Multisite activation improvements.
 
 = 1.0.9 =
-  *  Updated DPO default checkout image
+  *  Updated DPO default checkout image.
 
 = 1.0.8 =
-  *  Added to cURL SSL version 6 and DPO URL version to 6
+  *  Added to cURL SSL version 6 and DPO URL version to 6.
 
 = 1.0.7 =
   *  Banner images and text updated.
