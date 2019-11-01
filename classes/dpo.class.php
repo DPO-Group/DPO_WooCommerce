@@ -25,7 +25,7 @@ if ( !defined( 'ABSPATH' ) ) {
 class WC_Gateway_DPO extends WC_Payment_Gateway
 {
 
-    const VERSION_DPO = '1.0.13';
+    const VERSION_DPO = '1.0.14';
 
     public function __construct()
     {
@@ -40,15 +40,19 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
         $this->init_settings();
 
         // Define user set variables in settings
-        $this->enabled           = $this->get_option( 'enabled' );
-        $this->title             = $this->get_option( 'title' );
-        $this->description       = $this->get_option( 'description' );
-        $this->company_token     = $this->get_option( 'company_token' );
-        $this->successful_status = $this->get_option( 'successful_status' );
-        $this->url               = $this->get_option( 'dpo_url' );
-        $this->ptl_type          = $this->get_option( 'ptl_type' );
-        $this->ptl               = $this->get_option( 'ptl' );
-        $this->image_url         = $this->get_option( 'image_url' );
+        $this->enabled                    = $this->get_option( 'enabled' );
+        $this->title                      = $this->get_option( 'title' );
+        $this->description                = $this->get_option( 'description' );
+        $this->company_token              = $this->get_option( 'company_token' );
+        $this->default_service_type       = $this->get_option( 'default_service_type' );
+        $this->successful_status          = $this->get_option( 'successful_status' );
+        $this->url                        = $this->get_option( 'dpo_url' );
+        $this->pay_url                    = $this->get_option( 'pay_url' );
+        $this->ptl_type                   = $this->get_option( 'ptl_type' );
+        $this->ptl                        = $this->get_option( 'ptl' );
+        $this->image_url                  = $this->get_option( 'image_url' );
+        $this->order_meta_service         = $this->get_option( 'order_meta_service' );
+        $this->order_meta_company_acc_ref = $this->get_option( 'order_meta_company_acc_ref' );
 
         // Save options
         if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) ) {
@@ -57,7 +61,6 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
             add_action( 'woocommerce_update_options_payment_gateways', array( &$this, 'process_admin_options' ) );
         }
 
-        add_action( 'wp_enqueue_scripts', array( $this, 'frontend_scripts_and_styles' ), 100 );
         add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'check_dpo_response' ) );
 
     }
@@ -67,7 +70,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
     {
 
         $this->form_fields = array(
-            'enabled'           => array(
+            'enabled'                    => array(
                 'title'       => __( 'Enable/Disable', 'woocommerce' ),
                 'label'       => __( 'Enable DPO Group Gateway', 'woocommerce' ),
                 'type'        => 'checkbox',
@@ -75,32 +78,46 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                 'desc_tip'    => true,
                 'default'     => 'no',
             ),
-            'title'             => array(
+            'title'                      => array(
                 'title'       => __( 'Title', 'paygate' ),
                 'type'        => 'text',
                 'description' => __( 'This controls the title which the user sees during checkout.', 'paygate' ),
                 'desc_tip'    => false,
                 'default'     => __( 'DPO Payment Gateway', 'woocommerce' ),
             ),
-            'description'       => array(
+            'description'                => array(
                 'title'       => __( 'Description', 'woocommerce' ),
                 'type'        => 'textarea',
                 'description' => __( 'This controls the description which the user sees during checkout.', 'paygate' ),
                 'default'     => 'Pay via DPO Group',
             ),
-            'company_token'     => array(
+            'company_token'              => array(
                 'title'       => __( 'Company Token', 'woocommerce' ),
                 'type'        => 'text',
                 'description' => __( 'You need to receive token number from DPO Group gateway', 'woocommerce' ),
                 'placeholder' => __( 'For Example: 57466282-EBD7-4ED5-B699-8659330A6996', 'woocommerce' ),
                 'desc_tip'    => true,
             ),
-            'dpo_url'           => array(
-                'title'    => __( 'DPO Group URL', 'woocommerce' ),
-                'type'     => 'text',
-                'desc_tip' => true,
+            'default_service_type'       => array(
+                'title'       => __( 'Default DPO Service Type', 'woocommerce' ),
+                'type'        => 'text',
+                'description' => __( 'Insert a default service type number according to the options accepted by the DPO Group.', 'woocommerce' ),
+                'placeholder' => __( 'For Example: 29161', 'woocommerce' ),
+                'desc_tip'    => true,
             ),
-            'ptl_type'          => array(
+            'dpo_url'                    => array(
+                'title'       => __( 'DPO Group URL', 'woocommerce' ),
+                'type'        => 'text',
+                'description' => __( 'The default is https://secure.3gdirectpay.com', 'woocommerce' ),
+                'default'     => 'https://secure.3gdirectpay.com',
+            ),
+            'pay_url'                    => array(
+                'title'       => __( 'DPO Pay URL', 'woocommerce' ),
+                'type'        => 'text',
+                'description' => __( 'The default is pay.php', 'woocommerce' ),
+                'default'     => 'pay.php',
+            ),
+            'ptl_type'                   => array(
                 'title'       => __( 'PTL Type ( Optional )', 'woocommerce' ),
                 'type'        => 'select',
                 'description' => __( 'Define payment time limit  tag is hours or minutes.', 'woocommerce' ),
@@ -110,13 +127,13 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                 ),
                 'default'     => 'hours',
             ),
-            'ptl'               => array(
+            'ptl'                        => array(
                 'title'       => __( 'PTL ( Optional )', 'woocommerce' ),
                 'type'        => 'text',
                 'description' => __( 'Define number of hours to payment time limit', 'woocommerce' ),
                 'desc_tip'    => true,
             ),
-            'successful_status' => array(
+            'successful_status'          => array(
                 'title'       => __( 'Successful Order Status', 'woocommerce' ),
                 'type'        => 'select',
                 'description' => __( 'Define order status if transaction successful. If "On Hold", stock will NOT be reduced automaticlly.', 'woocommerce' ),
@@ -126,6 +143,18 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                     'on-hold'    => __( 'On Hold', 'woocommerce' ),
                 ),
                 'default'     => 'processing',
+            ),
+            'order_meta_service'         => array(
+                'title'       => __( 'Add Order Meta to Service', 'woocommerce' ),
+                'type'        => 'text',
+                'description' => __( 'Add order meta to DPO services using \',\' to seperate meta keys (e.g. SERVICE_TYPE|META_KEY1,META_KEY2).', 'woocommerce' ),
+                'placeholder' => __( 'For Example: 29161|billing_company,custom_meta_key,', 'woocommerce' ),
+            ),
+            'order_meta_company_acc_ref' => array(
+                'title'       => __( 'Add Order Meta to CompanyAccRef', 'woocommerce' ),
+                'type'        => 'text',
+                'description' => __( 'Add order meta to DPO CompanyAccRef using \',\' to seperate meta keys (e.g. META_KEY1,META_KEY2).', 'woocommerce' ),
+                'placeholder' => __( 'For Example: billing_company,custom_meta_key,', 'woocommerce' ),
             ),
 
         );
@@ -171,7 +200,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                 );
             }
             // Create DPO Group gateway paymnet URL
-            $paymnetURL = $this->url . "/pay.php?ID=" . $xml->TransToken[0];
+            $paymnetURL = $this->url . "/" . $this->pay_url . "?ID=" . $xml->TransToken[0];
             return array(
                 'redirect' => $paymnetURL,
                 'result'   => 'success',
@@ -248,7 +277,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
             // Get product details
             $single_product = new WC_Product( $product_id );
 
-            $serviceType = isset( $product_data["service_type"][0] ) ? $product_data["service_type"][0] : 0;
+            $serviceType = isset( $product_data["service_type"][0] ) ? $product_data["service_type"][0] : $this->default_service_type;
             $serviceDesc = preg_replace( '/&/', 'and', $single_product->post->post_title );
 
             // Create each product service xml
@@ -257,6 +286,48 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                             <ServiceDescription>' . $serviceDesc . '</ServiceDescription>
                             <ServiceDate>' . current_time( 'Y/m/d H:i' ) . '</ServiceDate>
                         </Service>';
+        }
+        // Check order_meta_service and add to services if applicable
+        $order_fields = explode( '|', $this->order_meta_service ); // Split order_meta_service into array
+        if ( key_exists( '0', $order_fields ) && key_exists( '1', $order_fields ) ) {
+            // Check order_meta_service was valid
+            $serviceType = $order_fields['0'];
+            $serviceDesc = $order_fields['1'];
+            if ( $serviceType != "" && $serviceDesc != "" ) {
+                $order_fields_array = explode( ',', $serviceDesc ); // Split order_field_meta into array if applicable
+                if ( key_exists( '1', $order_fields_array ) ) {
+                    // Check if multiple meta keys were supplied
+                    $serviceDesc = '';
+                    foreach ( $order_fields_array as $order_field ) {
+                        $serviceDesc .= get_post_meta( $order_id, $order_field, true ) . ',';
+                    }
+                    $serviceDesc = substr_replace( $serviceDesc, "", -1 ); // Final $serviceDesc like META_KEY1,META_KEY2
+                } else {
+                    $serviceDesc = get_post_meta( $order_id, $serviceDesc, true );
+                }
+                $service .= '<Service>
+                            <ServiceType>' . $serviceType . '</ServiceType>
+                            <ServiceDescription>' . $serviceDesc . '</ServiceDescription>
+                            <ServiceDate>' . current_time( 'Y/m/d H:i' ) . '</ServiceDate>
+                        </Service>';
+            }
+        }
+
+        // Check order_meta_company_acc_ref and add to companyAccRef if applicable
+        $companyAccRef = $this->order_meta_company_acc_ref;
+        if ( $companyAccRef != "" ) {
+            $order_fields_array = explode( ',', $companyAccRef ); // Split order_field_meta into array if applicable
+            if ( key_exists( '1', $order_fields_array ) ) {
+                // Check if multiple meta keys were supplied
+                $companyAccRef = '';
+                foreach ( $order_fields_array as $order_field ) {
+                    $companyAccRef .= get_post_meta( $order_id, $order_field, true ) . ',';
+                }
+                $companyAccRef = substr_replace( $companyAccRef, "", -1 ); // Final $companyAccRef like META_KEY1,META_KEY2
+            } else {
+                $companyAccRef = get_post_meta( $order_id, $companyAccRef, true );
+            }
+            $companyAccRef = '<CompanyAccRef>' . $companyAccRef . '</CompanyAccRef>';
         }
 
         $input_xml = '<?xml version="1.0" encoding="utf-8"?>
@@ -271,6 +342,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
         $param["city"] .
         $param["zipcode"] .
         $param["country"] .
+        $companyAccRef .
         $param["amount"] . '
                         <PaymentCurrency>' . $param["currency"] . '</PaymentCurrency>
                         <CompanyRef>' . $param["order_id"] . '</CompanyRef>
