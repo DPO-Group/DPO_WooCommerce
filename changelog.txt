@@ -1,3 +1,10 @@
+= 1.0.15 - June 2, 2020 =
+  * Compatibility for WC4 and PHP7.3.
+  * Added test configuration.
+  * Updated endpoints.
+  * Improved cancel handling.
+  * Improved error handling.
+
 = 1.0.14 - November 01, 2019 =
   * Add 'DPO Pay URL' feature.
   * Add 'Add Order Meta to Service' feature.
