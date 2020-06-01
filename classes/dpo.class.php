@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) DPO Group
+ * Copyright (c) 2020 DPO Group
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -25,17 +25,39 @@ if ( !defined( 'ABSPATH' ) ) {
 class WC_Gateway_DPO extends WC_Payment_Gateway
 {
 
-    const VERSION_DPO = '1.0.14';
+    const VERSION_DPO = '1.0.15';
+
+    protected $plugin_url;
+    protected $company_token;
+    protected $test_company_token = '9F416C11-127B-4DE2-AC7F-D5710E4C5E0A';
+    protected $live_company_token;
+    protected $default_service_type;
+    protected $test_default_service_type = '3854';
+    protected $live_default_service_type;
+    protected $successful_status;
+    protected $url;
+    protected $pay_url;
+    protected $test_url     = 'https://secure1.sandbox.directpay.online/API/v6/';
+    protected $test_pay_url = 'https://secure1.sandbox.directpay.online/payv2.php';
+    protected $live_url     = 'https://secure.3gdirectpay.com/API/v6/';
+    protected $live_pay_url = 'https://secure.3gdirectpay.com/payv2.php';
+    protected $ptl_type;
+    protected $ptl;
+    protected $image_url;
+    protected $order_meta_service;
+    protected $order_meta_company_acc_ref;
+    protected $test_mode;
 
     public function __construct()
     {
 
         $this->id                 = 'woocommerce_dpo';
-        $this->plugin_url         = trailingslashit( plugin_dir_url( $this->file ) );
-        $this->icon               = $this->plugin_url . 'woocommerce-gateway-direct-pay-online/assets/images/logo.svg';
+        $this->plugin_url         = trailingslashit( plugins_url( null, dirname( __FILE__ ) ) );
+        $this->icon               = $this->plugin_url . '/assets/images/logo.svg';
         $this->has_fields         = true;
         $this->method_title       = 'DPO Group';
-        $this->method_description = __( 'This payment gateway works by sending the customer to DPO Group to complete their payment.', 'paygate' );
+        $this->method_description = __( 'This payment gateway works by sending the customer to DPO Group to complete their payment.',
+            'paygate' );
         $this->init_form_fields();
         $this->init_settings();
 
@@ -43,20 +65,36 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
         $this->enabled                    = $this->get_option( 'enabled' );
         $this->title                      = $this->get_option( 'title' );
         $this->description                = $this->get_option( 'description' );
-        $this->company_token              = $this->get_option( 'company_token' );
-        $this->default_service_type       = $this->get_option( 'default_service_type' );
+        $this->live_company_token         = $this->get_option( 'company_token' );
+        $this->live_default_service_type  = $this->get_option( 'default_service_type' );
         $this->successful_status          = $this->get_option( 'successful_status' );
-        $this->url                        = $this->get_option( 'dpo_url' );
-        $this->pay_url                    = $this->get_option( 'pay_url' );
+        $this->live_url                   = $this->get_option( 'dpo_url' );
+        $this->live_pay_url               = $this->get_option( 'pay_url' );
         $this->ptl_type                   = $this->get_option( 'ptl_type' );
         $this->ptl                        = $this->get_option( 'ptl' );
         $this->image_url                  = $this->get_option( 'image_url' );
         $this->order_meta_service         = $this->get_option( 'order_meta_service' );
         $this->order_meta_company_acc_ref = $this->get_option( 'order_meta_company_acc_ref' );
+        $this->test_mode                  = $this->get_option( 'test_mode' );
+
+        if ( $this->test_mode == 'yes' ) {
+            $this->company_token        = $this->test_company_token;
+            $this->default_service_type = $this->test_default_service_type;
+            $this->url                  = $this->test_url;
+            $this->pay_url              = $this->test_pay_url;
+        } else {
+            $this->company_token        = $this->live_company_token;
+            $this->default_service_type = $this->live_default_service_type;
+            $this->url                  = $this->live_url;
+            $this->pay_url              = $this->live_pay_url;
+        }
 
         // Save options
         if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) ) {
-            add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'process_admin_options' ) );
+            add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array(
+                &$this,
+                'process_admin_options',
+            ) );
         } else {
             add_action( 'woocommerce_update_options_payment_gateways', array( &$this, 'process_admin_options' ) );
         }
@@ -74,21 +112,23 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                 'title'       => __( 'Enable/Disable', 'woocommerce' ),
                 'label'       => __( 'Enable DPO Group Gateway', 'woocommerce' ),
                 'type'        => 'checkbox',
-                'description' => __( 'This controls whether or not this gateway is enabled within WooCommerce.', 'paygate' ),
+                'description' => __( 'This controls whether or not this gateway is enabled within WooCommerce.',
+                    'paygatedpo' ),
                 'desc_tip'    => true,
                 'default'     => 'no',
             ),
             'title'                      => array(
                 'title'       => __( 'Title', 'paygate' ),
                 'type'        => 'text',
-                'description' => __( 'This controls the title which the user sees during checkout.', 'paygate' ),
+                'description' => __( 'This controls the title which the user sees during checkout.', 'paygatedpo' ),
                 'desc_tip'    => false,
                 'default'     => __( 'DPO Payment Gateway', 'woocommerce' ),
             ),
             'description'                => array(
                 'title'       => __( 'Description', 'woocommerce' ),
                 'type'        => 'textarea',
-                'description' => __( 'This controls the description which the user sees during checkout.', 'paygate' ),
+                'description' => __( 'This controls the description which the user sees during checkout.',
+                    'paygatedpo' ),
                 'default'     => 'Pay via DPO Group',
             ),
             'company_token'              => array(
@@ -101,21 +141,32 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
             'default_service_type'       => array(
                 'title'       => __( 'Default DPO Service Type', 'woocommerce' ),
                 'type'        => 'text',
-                'description' => __( 'Insert a default service type number according to the options accepted by the DPO Group.', 'woocommerce' ),
+                'description' => __( 'Insert a default service type number according to the options accepted by the DPO Group.',
+                    'woocommerce' ),
                 'placeholder' => __( 'For Example: 29161', 'woocommerce' ),
                 'desc_tip'    => true,
             ),
+            'test_mode'                  => array(
+                'title'       => __( 'Enable Test Mode', 'woocommerce' ),
+                'label'       => __( 'Enable Test Mode', 'woocommerce' ),
+                'type'        => 'checkbox',
+                'description' => __( 'Uses test accounts if enabled. No real transactions processed', 'paygatedpo' ),
+                'desc_tip'    => true,
+                'default'     => 'no',
+            ),
             'dpo_url'                    => array(
-                'title'       => __( 'DPO Group URL', 'woocommerce' ),
+                'title'       => __( 'DPO Group API URL', 'woocommerce' ),
                 'type'        => 'text',
-                'description' => __( 'The default is https://secure.3gdirectpay.com', 'woocommerce' ),
-                'default'     => 'https://secure.3gdirectpay.com',
+                'description' => __( 'The default is https://secure.3gdirectpay.com/API/v6/. You should not have to change this',
+                    'woocommerce' ),
+                'default'     => 'https://secure.3gdirectpay.com/API/v6/',
             ),
             'pay_url'                    => array(
                 'title'       => __( 'DPO Pay URL', 'woocommerce' ),
                 'type'        => 'text',
-                'description' => __( 'The default is pay.php', 'woocommerce' ),
-                'default'     => 'pay.php',
+                'description' => __( 'The default is https://secure.3gdirectpay.com/payv2.php. You should not have to change this',
+                    'woocommerce' ),
+                'default'     => 'https://secure.3gdirectpay.com/payv2.php',
             ),
             'ptl_type'                   => array(
                 'title'       => __( 'PTL Type ( Optional )', 'woocommerce' ),
@@ -136,7 +187,8 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
             'successful_status'          => array(
                 'title'       => __( 'Successful Order Status', 'woocommerce' ),
                 'type'        => 'select',
-                'description' => __( 'Define order status if transaction successful. If "On Hold", stock will NOT be reduced automaticlly.', 'woocommerce' ),
+                'description' => __( 'Define order status if transaction successful. If "On Hold", stock will NOT be reduced automaticlly.',
+                    'woocommerce' ),
                 'options'     => array(
                     'processing' => __( 'Processing', 'woocommerce' ),
                     'completed'  => __( 'Completed', 'woocommerce' ),
@@ -147,13 +199,15 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
             'order_meta_service'         => array(
                 'title'       => __( 'Add Order Meta to Service', 'woocommerce' ),
                 'type'        => 'text',
-                'description' => __( 'Add order meta to DPO services using \',\' to seperate meta keys (e.g. SERVICE_TYPE|META_KEY1,META_KEY2).', 'woocommerce' ),
+                'description' => __( 'Add order meta to DPO services using \',\' to seperate meta keys (e.g. SERVICE_TYPE|META_KEY1,META_KEY2).',
+                    'woocommerce' ),
                 'placeholder' => __( 'For Example: 29161|billing_company,custom_meta_key,', 'woocommerce' ),
             ),
             'order_meta_company_acc_ref' => array(
                 'title'       => __( 'Add Order Meta to CompanyAccRef', 'woocommerce' ),
                 'type'        => 'text',
-                'description' => __( 'Add order meta to DPO CompanyAccRef using \',\' to seperate meta keys (e.g. META_KEY1,META_KEY2).', 'woocommerce' ),
+                'description' => __( 'Add order meta to DPO CompanyAccRef using \',\' to seperate meta keys (e.g. META_KEY1,META_KEY2).',
+                    'woocommerce' ),
                 'placeholder' => __( 'For Example: billing_company,custom_meta_key,', 'woocommerce' ),
             ),
 
@@ -164,10 +218,10 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
     public function admin_options()
     {
         ?>
-            <h2><?php _e( 'DPO Group', 'woocommerce' );?></h2>
-            <table class="form-table">
+        <h2><?php _e( 'DPO Group', 'woocommerce' );?></h2>
+        <table class="form-table">
             <?php $this->generate_settings_html();?>
-            </table>
+        </table>
         <?php
 }
 
@@ -179,7 +233,9 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
         if ( $response === false ) {
 
             //show error message
-            wc_add_notice( __( 'Payment error: Unable to connect to the payment gateway, please try again', 'woothemes' ), 'error' );
+            wc_add_notice( __( 'Payment error: Unable to connect to the payment gateway, please try again',
+                'woothemes' ), 'error' );
+
             return array(
                 'result'   => 'fail',
                 'redirect' => '',
@@ -187,24 +243,38 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
 
         } else {
 
-            // Convert the XML result into array
-            $xml = new SimpleXMLElement( $response );
+            if ( $this->is_valid_xml( $response ) ) {
 
-            if ( $xml->Result[0] != '000' ) {
+                // Convert the XML result into array
+                $xml = new SimpleXMLElement( $response );
 
+                if ( $xml->Result[0] != '000' ) {
+
+                    // Show error message
+                    wc_add_notice( __( 'Payment error code: ' . $xml->Result[0] . ', ' . $xml->ResultExplanation[0],
+                        'woothemes' ), 'error' );
+
+                    return array(
+                        'result'   => 'fail',
+                        'redirect' => '',
+                    );
+                }
+                // Create DPO Group gateway payment URL
+                $paymentURL = $this->pay_url . "?ID=" . $xml->TransToken[0];
+
+                return array(
+                    'redirect' => $paymentURL,
+                    'result'   => 'success',
+                );
+
+            } else {
                 // Show error message
-                wc_add_notice( __( 'Payment error code: ' . $xml->Result[0] . ', ' . $xml->ResultExplanation[0], 'woothemes' ), 'error' );
+                wc_add_notice( __( 'Payment error: ' . $response, 'woothemes' ), 'error' );
                 return array(
                     'result'   => 'fail',
                     'redirect' => '',
                 );
             }
-            // Create DPO Group gateway paymnet URL
-            $paymnetURL = $this->url . "/" . $this->pay_url . "?ID=" . $xml->TransToken[0];
-            return array(
-                'redirect' => $paymnetURL,
-                'result'   => 'success',
-            );
         }
     }
 
@@ -216,12 +286,15 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
 
         $order = new WC_Order( $order_id );
 
+        // Non-numeric values not allowed by DPO
+        $phone = preg_replace( ['/\+/', '/[^0-9]+/'], ['00', ''], $order->get_billing_phone() );
+
         $param = array(
             'order_id'   => $order_id,
             'amount'     => '<PaymentAmount>' . $order->get_total() . '</PaymentAmount>',
             'first_name' => '<customerFirstName>' . $order->get_billing_first_name() . '</customerFirstName>',
             'last_name'  => '<customerLastName>' . $order->get_billing_last_name() . '</customerLastName>',
-            'phone'      => '<customerPhone>' . $order->get_billing_phone() . '</customerPhone>',
+            'phone'      => '<customerPhone>' . $phone . '</customerPhone>',
             'email'      => '<customerEmail>' . $order->get_billing_email() . '</customerEmail>',
             'address'    => '<customerAddress>' . $order->get_billing_address_1() . '</customerAddress>',
             'city'       => '<customerCity>' . $order->get_billing_city() . '</customerCity>',
@@ -248,6 +321,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
         if ( $currency === 'CFA' ) {
             $currency = 'XOF';
         }
+
         return $currency;
     }
 
@@ -257,8 +331,9 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
 
         // URL for DPO Group to send the buyer to after review and continue from DPO Group.
         $returnURL = $this->get_return_url( $order );
+
         // URL for DPO Group to send the buyer to if they cancel the payment.
-        $cancelURL = wc_get_cart_url();
+        $cancelURL = esc_url( $order->get_cancel_order_url() );
 
         // Get all pruducts in the cart retrieve service type and description of the product
         $service = '';
@@ -277,7 +352,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
             // Get product details
             $single_product = new WC_Product( $product_id );
 
-            $serviceType = isset( $product_data["service_type"][0] ) ? $product_data["service_type"][0] : $this->default_service_type;
+            $serviceType = !empty( $product_data["service_type"][0] ) ? $product_data["service_type"][0] : $this->default_service_type;
             $serviceDesc = preg_replace( '/&/', 'and', $single_product->post->post_title );
 
             // Create each product service xml
@@ -301,7 +376,8 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                     foreach ( $order_fields_array as $order_field ) {
                         $serviceDesc .= get_post_meta( $order_id, $order_field, true ) . ',';
                     }
-                    $serviceDesc = substr_replace( $serviceDesc, "", -1 ); // Final $serviceDesc like META_KEY1,META_KEY2
+                    $serviceDesc = substr_replace( $serviceDesc, "",
+                        -1 ); // Final $serviceDesc like META_KEY1,META_KEY2
                 } else {
                     $serviceDesc = get_post_meta( $order_id, $serviceDesc, true );
                 }
@@ -323,7 +399,8 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                 foreach ( $order_fields_array as $order_field ) {
                     $companyAccRef .= get_post_meta( $order_id, $order_field, true ) . ',';
                 }
-                $companyAccRef = substr_replace( $companyAccRef, "", -1 ); // Final $companyAccRef like META_KEY1,META_KEY2
+                $companyAccRef = substr_replace( $companyAccRef, "",
+                    -1 ); // Final $companyAccRef like META_KEY1,META_KEY2
             } else {
                 $companyAccRef = get_post_meta( $order_id, $companyAccRef, true );
             }
@@ -364,7 +441,7 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
     public function createCURL( $input_xml )
     {
 
-        $url = $this->url . "/API/v6/";
+        $url = $this->url;
 
         $ch = curl_init();
 
@@ -391,51 +468,72 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
         global $woocommerce;
 
         $transactionToken = $_GET['TransactionToken'];
+        $order            = wc_get_order( $order_id );
 
-        if ( !isset( $transactionToken ) ) {
-            wc_add_notice( __( 'Transaction Token error, please contact support center', 'woothemes' ), 'error' );
-            wp_redirect( wc_get_cart_url() );exit;
-        }
-
-        // Get verify token response from DPO Group
-        $response = $this->verifytoken( $transactionToken );
-
-        if ( $response ) {
-
-            $order = wc_get_order( $order_id );
-
-            // Check selected order status workflow
-            if ( $response->Result[0] == '000' ) {
-                switch ( $this->successful_status ) {
-                    case 'on-hold':
-                        $order->update_status( 'on-hold', __( 'The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. ', 'woocommerce' ) );
-                        break;
-                    case 'completed':
-                        $order->update_status( 'completed', __( 'The transaction paid successfully and order approved.', 'woocommerce' ) );
-                        $order->payment_complete();
-                        break;
-                    default:
-                        $order->update_status( 'processing', __( 'The transaction paid successfully and waiting for approval.', 'woocommerce' ) );
-                        $order->payment_complete();
-                        break;
-                }
-
+        if ( empty( $transactionToken ) ) {
+            if ( $order->get_status() == $this->successful_status ) {
+                $order->payment_complete();
             } else {
-
-                $error_code = $response->Result[0];
-                $error_desc = $response->ResultExplanation[0];
-
-                $order->update_status( 'failed ', __( 'Payment Failed: ' . $error_code . ', ' . $error_desc . '. Notice that the stock is NOT reduced. ', 'woocommerce' ) );
-                wc_add_notice( __( 'Payment Failed: ' . $error_code . ', ' . $error_desc, 'woothemes' ), 'error' );
-                wp_redirect( WC()->cart->get_checkout_url() );exit;
+                wp_redirect( wc_get_cart_url() );
+                exit;
             }
         } else {
 
-            wc_add_notice( __( ' Varification error: Unable to connect to the payment gateway, please try again', 'woothemes' ), 'error' );
-            wp_redirect( wc_get_cart_url() );exit;
-        }
+            // Get verify token response from DPO Group
+            $response = $this->verifytoken( $transactionToken );
 
+            if ( $response ) {
+                // Check selected order status workflow
+                if ( $response->Result[0] == '000' ) {
+                    switch ( $this->successful_status ) {
+                        case 'on-hold':
+                            $order->update_status( 'on-hold',
+                                __( 'The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. ',
+                                    'woocommerce' ) );
+                            $order->add_order_note( 'The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. ' );
+                            break;
+                        case 'completed':
+                            $order->update_status( 'completed',
+                                __( 'The transaction paid successfully and order approved.', 'woocommerce' ) );
+                            $order->add_order_note( 'The transaction paid successfully and order approved.' );
+                            $order->payment_complete();
+                            break;
+                        default:
+                            $order->update_status( 'processing',
+                                __( 'The transaction paid successfully and waiting for approval.', 'woocommerce' ) );
+                            $order->add_order_note( 'The transaction paid successfully and waiting for approval.' );
+                            $order->payment_complete();
+                            break;
+                    }
+
+                } else {
+
+                    $error_code = $response->Result[0];
+                    $error_desc = $response->ResultExplanation[0];
+
+                    if ( $order->get_status() != $this->successful_status ) {
+                        $order->update_status( 'failed ',
+                            __( 'Payment Failed: ' . $error_code . ', ' . $error_desc . '. Notice that the stock is NOT reduced. ',
+                                'woocommerce' ) );
+                        $order->add_order_note( '' );
+                        wc_add_notice( __( 'Payment Failed: ' . $error_code . ', ' . $error_desc, 'woothemes' ),
+                            'error' );
+                        wp_redirect( WC()->cart->get_checkout_url() );
+                        exit;
+                    } elseif ( $order->get_status() == $this->successful_status ) {
+                        $order->payment_complete();
+                    }
+                }
+            } else {
+
+                wc_add_notice( __( ' Verification error: Unable to connect to the payment gateway, please try again',
+                    'woothemes' ), 'error' );
+                wp_redirect( wc_get_cart_url() );
+                exit;
+            }
+        }
     }
+
     // VerifyToken response from DPO Group
     public function verifytoken( $transactionToken )
     {
@@ -467,9 +565,24 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
     public function get_icon()
     {
         $icon_url = $this->icon;
-        $icon     = '<img src="' . WC_HTTPS::force_https_url( $this->icon ) . '" alt="' . esc_attr( $this->get_title() ) . '" style="width: auto !important; height: 25px !important; border: none !important;">';
+        $icon     = '<img src="' . esc_url( WC_HTTPS::force_https_url( $this->icon ) ) . '" alt="' . esc_attr( $this->get_title() ) . '" style="width: auto !important; height: 25px !important; border: none !important;">';
 
         return apply_filters( 'woocommerce_gateway_icon', $icon, $this->id );
+    }
+
+    /**
+     * is_valid_xml
+     *
+     * Check if XML is valid and correct
+     */
+    public function is_valid_xml( $xml )
+    {
+        $doc = @simplexml_load_string( $xml );
+        if ( $doc ) {
+            return true; // this is valid
+        } else {
+            return false; // this is not valid
+        }
     }
 
 }
