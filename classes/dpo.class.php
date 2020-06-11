@@ -62,14 +62,16 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
         $this->init_settings();
 
         // Define user set variables in settings
+        $dpo_url                          = $this->get_option( 'dpo_url' );
+        $pay_url                          = $this->get_option( 'pay_url' );
         $this->enabled                    = $this->get_option( 'enabled' );
         $this->title                      = $this->get_option( 'title' );
         $this->description                = $this->get_option( 'description' );
         $this->live_company_token         = $this->get_option( 'company_token' );
         $this->live_default_service_type  = $this->get_option( 'default_service_type' );
         $this->successful_status          = $this->get_option( 'successful_status' );
-        $this->live_url                   = $this->get_option( 'dpo_url' );
-        $this->live_pay_url               = $this->get_option( 'pay_url' );
+        $this->live_url                   = $dpo_url == '' ? $this->live_url : $dpo_url;
+        $this->live_pay_url               = $pay_url == '' ? $this->live_pay_url : $pay_url;
         $this->ptl_type                   = $this->get_option( 'ptl_type' );
         $this->ptl                        = $this->get_option( 'ptl' );
         $this->image_url                  = $this->get_option( 'image_url' );
@@ -86,7 +88,15 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
             $this->company_token        = $this->live_company_token;
             $this->default_service_type = $this->live_default_service_type;
             $this->url                  = $this->live_url;
-            $this->pay_url              = $this->live_pay_url;
+            // Add backwards compatibility with previous url structure
+            if ( $this->url == 'https://secure.3gdirectpay.com' ) {
+                $this->url .= '/API/v6/';
+            }
+            $this->pay_url = $this->live_pay_url;
+            // Add backwards compatibility with previous url structure
+            if ( $this->pay_url == 'pay.php' || $this->pay_url == 'payv2.php' ) {
+                $this->pay_url = 'https://secure.3gdirectpay.com/' . $this->pay_url;
+            }
         }
 
         // Save options
@@ -268,8 +278,9 @@ class WC_Gateway_DPO extends WC_Payment_Gateway
                 );
 
             } else {
+                $response_message = wp_strip_all_tags( $response );
                 // Show error message
-                wc_add_notice( __( 'Payment error: ' . $response, 'woothemes' ), 'error' );
+                wc_add_notice( __( 'Payment error: ' . $response_message, 'woothemes' ), 'error' );
                 return array(
                     'result'   => 'fail',
                     'redirect' => '',

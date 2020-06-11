@@ -4,15 +4,15 @@
  * Plugin Name: DPO Group plugin for WooCommerce
  * Plugin URI: https://github.com/DirectPay-Online/DPO_WooCommerce
  * Description: Accept payments for WooCommerce using DPO Group's online payments service
- * Version: 1.0.15
- * Tested: 5.4.1
+ * Version: 1.0.16
+ * Tested: 5.4.2
  * Author: DPO Group
  * Author URI: https://www.dpogroup.com/africa/
  * Developer: App Inlet (Pty) Ltd
  * Developer URI: https://www.appinlet.com/
  *
  * WC requires at least: 3.0
- * WC tested up to: 4.1
+ * WC tested up to: 4.2
  *
  * Copyright: © 2020 DPO Group
  * License: GNU General Public License v3.0
