@@ -1,3 +1,8 @@
+= 1.0.16 - June 11, 2020 =
+  * Improve HTTP error display.
+  * Test with WC 4.2 and WP 5.4.2.
+  * Add backwards compatibility with previous url structures.
+
 = 1.0.15 - June 2, 2020 =
   * Compatibility for WC4 and PHP7.3.
   * Added test configuration.
