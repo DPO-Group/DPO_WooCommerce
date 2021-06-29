@@ -4,8 +4,8 @@
 This is the DPO Group plugin for WooCommerce. Please feel free to contact the [DPO Group support team](https://www.directpay.online/support/) should you require any assistance.
 
 ## Installation
-[![How To Setup DPO Group for WooCommerce](https://www.appinlet.com/wp-content/uploads/2020/03/How-To-Setup-DPO-Group-for-WooCommerce-scaled.jpg)](https://www.youtube.com/watch?v=AWZ13mdru2E "How To Setup DPO Group for WooCommerce")
-Please navigate to the [releases page](https://github.com/DirectPay-Online/DPO_WooCommerce/releases), download the latest release (v1.0.16) and unzip. You will them be able to follow the integration guide PDF which is included in the zip.
+[![How To Setup DPO Group for WooCommerce](https://appinlet.com/wp-content/uploads/2021/01/How-To-Setup-DPO-Group-for-WooCommerce.jpg)](https://www.youtube.com/watch?v=AWZ13mdru2E "How To Setup DPO Group for WooCommerce")
+Please navigate to the [releases page](https://github.com/DPO-Group/DPO_WooCommerce/releases), download the latest release (v1.0.16) and unzip. You will then be able to follow the integration guide PDF which is included in the zip.
 
 ## Collaboration
 
