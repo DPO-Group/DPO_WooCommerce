@@ -3,7 +3,7 @@
 ## DPO Group WooCommerce plugin v1.1.1 for WooCommerce v6.0.0
 
 This is the DPO Group plugin for WooCommerce. Please feel free to contact
-the [DPO Group support team](https://www.directpay.online/support/) should you require any assistance.
+the [DPO Group support team](https://dpogroup.com/contact-us/) should you require any assistance.
 
 ## Installation
 
@@ -18,7 +18,7 @@ Please submit pull requests with any tweaks, features or fixes you would like to
 
 ## About DPO
 
-[DPO's](https://www.directpay.online/) highly secure payment platform makes payments simple by allowing businesses to
+[DPO's](https://dpogroup.com/) highly secure payment platform makes payments simple by allowing businesses to
 accept credit cards, mobile payments and cross-border payments.
 
 Our mission is to bring African businesses the most advanced online and offline payment processing technologies, while
