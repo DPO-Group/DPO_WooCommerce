@@ -9,19 +9,18 @@
 
 class WCGatewayDpoCron extends WCGatewayDPO
 {
-    const LOGGING = 'logging';
+    const LOGGING            = 'logging';
+    const TXN_MSG            = "The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. ";
+    const ORDER_APPROVED     = "The transaction paid successfully and order approved.";
+    const ORDER_APPROVAL_MSG = "The transaction paid successfully and waiting for approval.";
+    const PAYMENT_FAILED     = "Payment Failed: DPO payment failed or was cancelled. Notice that the stock is NOT reduced. ";
 
-    /**
-     * Run regularly to update orders
-     */
-    public static function dpo_order_query_cron()
+    public static function logData($orders)
     {
-        $dpo = new WCGatewayDPO();
+        $logging = false;
 
         // Load the settings
         $settings = get_option('woocommerce_woocommerce_dpo_settings', false);
-
-        $logging = false;
 
         if (isset($settings[self::LOGGING]) && $settings[self::LOGGING] === 'yes') {
             $logging = true;
@@ -30,8 +29,19 @@ class WCGatewayDpoCron extends WCGatewayDPO
         $logger = wc_get_logger();
         $logging ? $logger->add('dpo_cron', 'Starting DPO cron job') : '';
 
-        $orders = self::dpo_order_query_cron_query();
         $logging ? $logger->add('dpo_cron', 'Orders: ' . json_encode($orders)) : '';
+    }
+
+    /**
+     * Run regularly to update orders
+     */
+    public static function dpo_order_query_cron()
+    {
+        $dpo = new WCGatewayDPO();
+
+        $orders = self::dpo_order_query_cron_query();
+
+        self::logData($orders);
 
         foreach ($orders as $order) {
             $order_id         = $order->ID;
@@ -44,12 +54,12 @@ class WCGatewayDpoCron extends WCGatewayDPO
                 $order->update_status(
                     'failed',
                     __(
-                        'Payment Failed: DPO payment failed or was cancelled. Notice that the stock is NOT reduced. ',
+                        self::PAYMENT_FAILED,
                         'woocommerce'
                     )
                 );
                 $order->add_order_note(
-                    'Payment Failed: DPO payment failed or was cancelled. Notice that the stock is NOT reduced.'
+                    self::PAYMENT_FAILED
                 );
                 $order->save();
                 continue;
@@ -66,43 +76,50 @@ class WCGatewayDpoCron extends WCGatewayDPO
                                 $order->update_status(
                                     'on-hold',
                                     __(
-                                        'The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. ',
+                                        self::TXN_MSG,
                                         'woocommerce'
                                     )
                                 );
                                 $order->add_order_note(
-                                    'The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. '
+                                    self::TXN_MSG
                                 );
                                 break;
                             case 'completed':
                                 $order->update_status(
                                     'completed',
-                                    __('The transaction paid successfully and order approved.', 'woocommerce')
+                                    __(self::ORDER_APPROVED, 'woocommerce')
                                 );
-                                $order->add_order_note('The transaction paid successfully and order approved.');
+                                $order->add_order_note(self::ORDER_APPROVED);
                                 $order->payment_complete();
                                 break;
                             default:
                                 $order->update_status(
                                     'processing',
-                                    __('The transaction paid successfully and waiting for approval.', 'woocommerce')
+                                    __(self::ORDER_APPROVAL_MSG, 'woocommerce')
                                 );
-                                $order->add_order_note('The transaction paid successfully and waiting for approval.');
+                                $order->add_order_note(self::ORDER_APPROVAL_MSG);
                                 $order->payment_complete();
                                 break;
                         }
                     }
                 } else {
-                    $error_code = $response->Result[0];
-                    $error_desc = $response->ResultExplanation[0];
-                    if ($order->get_status() != $dpo->successful_status) {
-                        $order->update_status( 'failed');
-                        $order->add_order_note('Payment Failed: ' . $error_code . ', ' . $error_desc . '. Notice that the stock is NOT reduced. ');
-                    } elseif ($order->get_status() == $dpo->successful_status) {
-                        $order->payment_complete();
-                    }
+                    self::updateOrderStatusCron($response, $order, $dpo);
                 }
             }
+        }
+    }
+
+    public static function updateOrderStatusCron($response, $order, $dpo)
+    {
+        $error_code = $response->Result[0];
+        $error_desc = $response->ResultExplanation[0];
+        if ($order->get_status() != $dpo->successful_status) {
+            $order->update_status('failed');
+            $order->add_order_note(
+                'Payment Failed: ' . $error_code . ', ' . $error_desc . '. Notice that the stock is NOT reduced. '
+            );
+        } elseif ($order->get_status() == $dpo->successful_status) {
+            $order->payment_complete();
         }
     }
 

@@ -1,5 +1,13 @@
-= 1.1.0 June 28, 2021
- * Tested on WooCommerce 5.4.1 and Wordpress 5.7.2
+*** DPO Group for WooCommerce Changelog ***
+= 1.1.1 - 2022-02-02 =
+ * Tested on WooCommerce 6.0 and Wordpress 5.9.
+ * Move plugin to WordPress.org.
+ * Add debug logging in the order side.
+ * Add test for curl extension.
+ * Add card icon selection feature.
+
+= 1.1.0 - 2021-06-28 =
+ * Tested on WooCommerce 5.4.1 and Wordpress 5.7.2.
  * Add logging in cron job.
  * Add DPO order reference to narrative.
  * Add DPO payment icons.
@@ -10,39 +18,39 @@
  * Add support for MWK.
  * Change GitHub url.
 
-= 1.0.16 - June 11, 2020 =
+= 1.0.16 - 2020-06-11 =
   * Improve HTTP error display.
   * Test with WC 4.2 and WP 5.4.2.
   * Add backwards compatibility with previous url structures.
 
-= 1.0.15 - June 2, 2020 =
+= 1.0.15 - 2020-06-02 =
   * Compatibility for WC4 and PHP7.3.
   * Added test configuration.
   * Updated endpoints.
   * Improved cancel handling.
   * Improved error handling.
 
-= 1.0.14 - November 01, 2019 =
+= 1.0.14 - 2019-11-01 =
   * Add 'DPO Pay URL' feature.
   * Add 'Add Order Meta to Service' feature.
   * Add 'Add Order Meta to CompanyAccRef' feature.
   * Add 'Default DPO Service Type' feature.
   * Fix 'wp_enqueue_scripts' and 'frontend_scripts_and_styles' warnings.
 
-= 1.0.13 - October 31, 2019 =
+= 1.0.13 - 2019-10-31 =
   * Add order status workflow to settings. PLEASE NOTE: If you had previously selected
   'Reduce Stock Automatically' to 'no', change your order status setting to 'on-hold'.
 
-= 1.0.12 - October 30, 2019 =
+= 1.0.12 - 2019-10-30 =
   * Push XOF if CFA selected.
 
-= 1.0.11 - October 17, 2019 =
+= 1.0.11 - 2019-10-17 =
   * WooCommerce 3 Support.
   * Fix broken 'Pay Now' link in WooCommerce emails.
   * Change DPO Group branding.
   * Move to GitHub.
 
-= 1.0.10 - August 23, 2019 =
+= 1.0.10 - 2019-08-23 =
   *  Multisite activation improvements.
 
 = 1.0.9 =
