@@ -3,7 +3,7 @@
 ## DPO Group WooCommerce plugin v1.1.1 for WooCommerce v6.0.0
 
 This is the DPO Group plugin for WooCommerce. Please feel free to contact
-the [DPO Group support team](mailto:supportsa@dpogroup.com) should you require any assistance.
+the [DPO Group support team](https://dpogroup.com/contact-us/) should you require any assistance.
 
 ## Installation
 
