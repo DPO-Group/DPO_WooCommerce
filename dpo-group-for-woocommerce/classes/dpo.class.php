@@ -1,22 +1,22 @@
 <?php
 /*
- * Copyright (c) 2021 DPO Group
+ * Copyright (c) 2023 DPO Group
  *
  * Author: App Inlet (Pty) Ltd
  *
  * Released under the GNU General Public License
  */
 
-if ( ! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
 require_once 'WCGatewayDpoCron.php';
 
 /**
- * DPO Group Gateway
+ * DPO Pay Gateway
  *
- * Provides a DPO Group Payment Gateway.
+ * Provides a DPO Pay Payment Gateway.
  *
  * @class       woocommerce_paygate
  * @package     WooCommerce
@@ -27,11 +27,11 @@ require_once 'WCGatewayDpoCron.php';
 class WCGatewayDPO extends WC_Payment_Gateway
 {
 
-    const VERSION_DPO = '1.1.0';
+    const VERSION_DPO = '1.1.2';
 
     protected const LOGGING = 'logging';
 
-    const DPO_GROUP = "DPO Group";
+    const DPO_GROUP = "DPO Pay";
 
     const TXN_MSG = "The transaction paid successfully and waiting for approval. 
     Notice that the stock will NOT reduced automatically. ";
@@ -44,18 +44,18 @@ class WCGatewayDPO extends WC_Payment_Gateway
     protected static $logging = false;
     protected static $logger = false;
     public $dpoIconsNameList = [
-        'mastercard' => "Mastercard",
-        'visa' => 'Visa',
-        'amex' => 'American Express',
-        'unionpay' => 'UnionPay',
-        'mpesa' => 'M-Pesa',
-        'airtelmoney' => 'Airtel Money',
-        'orangemoney' => 'Orange Money',
+        'mastercard'     => "Mastercard",
+        'visa'           => 'Visa',
+        'amex'           => 'American Express',
+        'unionpay'       => 'UnionPay',
+        'mpesa'          => 'M-Pesa',
+        'airtelmoney'    => 'Airtel Money',
+        'orangemoney'    => 'Orange Money',
         'mtnmobilemoney' => 'MTN Money',
         'vodaphonempesa' => 'Vodaphone M-Pesa',
-        'tigopesa' => 'Tigo Pesa',
-        'xpay' => 'XPay Life',
-        'paypal' => 'PayPal',
+        'tigopesa'       => 'Tigo Pesa',
+        'xpay'           => 'XPay Life',
+        'paypal'         => 'PayPal',
     ];
     protected $plugin_url;
     protected $company_token;
@@ -87,11 +87,11 @@ class WCGatewayDPO extends WC_Payment_Gateway
 
         $this->id                 = 'woocommerce_dpo';
         $this->plugin_url         = trailingslashit(plugins_url(null, dirname(__FILE__)));
-        $this->icon               = $this->plugin_url . '/assets/images/logo.svg';
+        $this->icon               = $this->plugin_url . '/assets/images/dpo-pay.svg';
         $this->has_fields         = true;
         $this->method_title       = self::DPO_GROUP;
         $this->method_description = __(
-            'This payment gateway works by sending the customer to DPO Group to complete their payment.',
+            'This payment gateway works by sending the customer to DPO Pay to complete their payment.',
             'paygate'
         );
         $this->init_form_fields();
@@ -140,7 +140,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
 
         if (isset($settings[self::LOGGING]) && $settings[self::LOGGING] === 'yes') {
             self::$logging = true;
-            if ( ! self::$logger) {
+            if (!self::$logger) {
                 self::$logger = wc_get_logger();
             }
         }
@@ -346,7 +346,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
         }
     }
 
-    // WooCommerce DPO Group settings html
+    // WooCommerce DPO Pay settings html
 
     public function payment_fields()
     {
@@ -363,7 +363,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
         $this->form_fields = array(
             'enabled'                    => array(
                 'title'       => __('Enable/Disable', 'woocommerce'),
-                'label'       => __('Enable DPO Group Gateway', 'woocommerce'),
+                'label'       => __('Enable DPO Pay Gateway', 'woocommerce'),
                 'type'        => 'checkbox',
                 'description' => __(
                     'This controls whether or not this gateway is enabled within WooCommerce.',
@@ -386,12 +386,12 @@ class WCGatewayDPO extends WC_Payment_Gateway
                     'This controls the description which the user sees during checkout.',
                     'paygatedpo'
                 ),
-                'default'     => 'Pay via DPO Group',
+                'default'     => 'Pay via DPO Pay',
             ),
             'company_token'              => array(
                 'title'       => __('Company Token', 'woocommerce'),
                 'type'        => 'text',
-                'description' => __('You need to receive token number from DPO Group gateway', 'woocommerce'),
+                'description' => __('You need to receive token number from DPO Pay gateway', 'woocommerce'),
                 'placeholder' => __('For Example: 57466282-EBD7-4ED5-B699-8659330A6996', 'woocommerce'),
                 'desc_tip'    => true,
             ),
@@ -399,7 +399,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 'title'       => __('Default DPO Service Type', 'woocommerce'),
                 'type'        => 'text',
                 'description' => __(
-                    'Insert a default service type number according to the options accepted by the DPO Group.',
+                    'Insert a default service type number according to the options accepted by the DPO Pay.',
                     'woocommerce'
                 ),
                 'placeholder' => __('For Example: 29161', 'woocommerce'),
@@ -422,7 +422,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 'default'     => 'no',
             ),
             'dpo_url'                    => array(
-                'title'       => __('DPO Group API URL', 'woocommerce'),
+                'title'       => __('DPO Pay API URL', 'woocommerce'),
                 'type'        => 'text',
                 'description' => __('The default is ', 'woocommerce') . $this->dpo_api_url . __(
                         '. You should not have to change this',
@@ -487,17 +487,25 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 ),
                 'placeholder' => __('For Example: billing_company,custom_meta_key,', 'woocommerce'),
             ),
-            'payment_icons'                              => [
-                'title'             => __('Include Payment Icons', 'woocommerce'),
-                'type'              => 'multiselect',
-                'class'             => 'wc-enhanced-select',
-                'css'               => 'width: 450px;',
-                'description'       => __(
+            'dpo_logo'                   => [
+                'title'       => __('Enable DPO Pay Logo', 'woocommerce'),
+                'label'       => __('Enable DPO Pay Logo', 'woocommerce'),
+                'type'        => 'checkbox',
+                'description' => __('Displays the DPO Pay Logo if enabled.', 'paygatedpo'),
+                'desc_tip'    => true,
+                'default'     => 'yes',
+            ],
+            'payment_icons'              => [
+                'title'       => __('Include Payment Icons', 'woocommerce'),
+                'type'        => 'multiselect',
+                'class'       => 'wc-enhanced-select',
+                'css'         => 'width: 450px;',
+                'description' => __(
                     'Select the payment icons you want to display on checkout.',
                     'woocommerce'
                 ),
-                'default'           => '',
-                'options'           => $this->getPaymentIcons(),
+                'default'     => '',
+                'options'     => $this->getPaymentIcons(),
             ],
 
         );
@@ -506,11 +514,13 @@ class WCGatewayDPO extends WC_Payment_Gateway
     /**
      * @return paymentIcons
      */
-    public function getPaymentIcons(){
-        $icons        = new stdClass();
-        foreach($this->dpoIconsNameList as $key => $icon){
+    public function getPaymentIcons()
+    {
+        $icons = new stdClass();
+        foreach ($this->dpoIconsNameList as $key => $icon) {
             $icons->$key = $icon;
         }
+
         return $icons;
     }
 
@@ -520,7 +530,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
         <h2><?php
             _e(self::DPO_GROUP, 'woocommerce'); ?></h2>
         <table class="form-table">
-            <caption>DPO Group</caption>
+            <caption>DPO Pay</caption>
             <tr>
                 <th id="tableHeader">Settings</th>
             </tr>
@@ -587,11 +597,18 @@ class WCGatewayDPO extends WC_Payment_Gateway
                     'redirect' => '',
                 );
             }
+
+            //Add Transaction ID
+            $transRef = $xml->TransRef[0]->__toString();
+            $order    = new WC_Order($order_id);
+            $order->set_transaction_id($transRef);
+            $order->save();
+
             // Add record to order - will appear as custom field in admin
-            update_post_meta($order_id, 'dpo_reference', $xml->TransRef[0]->__toString());
+            update_post_meta($order_id, 'dpo_reference', $transRef);
             update_post_meta($order_id, 'dpo_trans_token', $xml->TransToken[0]->__toString());
 
-            // Create DPO Group gateway payment URL
+            // Create DPO Pay gateway payment URL
             $paymentURL = $this->pay_url . "?ID=" . $xml->TransToken[0];
 
             $responseData = array(
@@ -644,7 +661,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
             'country'    => '<customerCountry>' . $order->get_billing_country() . '</customerCountry>',
             'dialcode'   => '<customerDialCode>' . $order->get_billing_country() . '</customerDialCode>',
             'ptl_type'   => ($this->ptl_type == 'minutes') ? '<PTLtype>minutes</PTLtype>' : "",
-            'ptl'        => ( ! empty($this->ptl)) ? '<PTL>' . $this->ptl . '</PTL>' : "",
+            'ptl'        => (!empty($this->ptl)) ? '<PTL>' . $this->ptl . '</PTL>' : "",
             'currency'   => $this->check_woocommerce_currency($order->get_currency()),
         );
 
@@ -683,10 +700,10 @@ class WCGatewayDPO extends WC_Payment_Gateway
      */
     public function create_send_xml_request($param, $order, $order_id)
     {
-        // URL for DPO Group to send the buyer to after review and continue from DPO Group.
+        // URL for DPO Pay to send the buyer to after review and continue from DPO Pay.
         $returnURL = $this->get_return_url($order);
 
-        // URL for DPO Group to send the buyer to if they cancel the payment.
+        // URL for DPO Pay to send the buyer to if they cancel the payment.
         $cancelURL = esc_url($order->get_cancel_order_url());
 
         // Get all products in the cart retrieve service type and description of the product
@@ -706,7 +723,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
             // Get product details
             $single_product = new WC_Product($product_id);
 
-            $serviceType = ! empty($product_data["service_type"][0]) ? $product_data["service_type"][0] : $this->default_service_type;
+            $serviceType = !empty($product_data["service_type"][0]) ? $product_data["service_type"][0] : $this->default_service_type;
             $serviceDesc = str_replace('&', 'and', $single_product->post->post_title);
 
             // Replace html with underscores as it is not allowed in XML
@@ -888,7 +905,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 exit;
             }
         }
-        // Get verify token response from DPO Group
+        // Get verify token response from DPO Pay
         $response = $this->verifytoken($transactionToken);
 
         if ($response) {
@@ -1028,13 +1045,20 @@ class WCGatewayDPO extends WC_Payment_Gateway
      */
     public function get_icon()
     {
-        $settings = get_option('woocommerce_woocommerce_dpo_settings', false);
+        $settings      = get_option('woocommerce_woocommerce_dpo_settings', false);
         $payment_icons = $settings['payment_icons'];
+        $dpoLogo       = $settings['dpo_logo'] ?? "";
 
-        if($payment_icons) {
-            $icon = '<img src="' . esc_url(WC_HTTPS::force_https_url($this->icon)) . '" alt="' . esc_attr(
-                    $this->get_title()
-                ) . '" style="width: auto !important; height: 25px !important; border: none !important;">';
+        if ($payment_icons) {
+            $icon = "";
+
+            if ($dpoLogo === 'yes' || $dpoLogo === 'on') {
+                $icon .= '<img src="' . $iconSrc = esc_url(
+                                                       WC_HTTPS::force_https_url($this->icon)
+                                                   ) . '" alt="' . esc_attr(
+                                                       $this->get_title()
+                                                   ) . '" style="width: auto !important; height: 25px !important; border: none !important;">';
+            }
 
             $icon        .= '<br><div style="padding: 25px 0;" id="dpo-icon-container">';
             $dpoImageUrl = plugin_dir_url(__FILE__) . '../assets/images/';

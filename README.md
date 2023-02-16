@@ -1,15 +1,15 @@
 # DPO_WooCommerce
 
-## DPO Group WooCommerce plugin v1.1.1 for WooCommerce v6.0.0
+## DPO Pay WooCommerce plugin v1.1.2 for WooCommerce v7.3.0
 
-This is the DPO Group plugin for WooCommerce. Please feel free to contact
-the [DPO Group support team](https://dpogroup.com/contact-us/) should you require any assistance.
+This is the DPO Pay plugin for WooCommerce. Please feel free to contact
+the [DPO Pay support team](https://dpogroup.com/contact-us/) should you require any assistance.
 
 ## Installation
 
-[![How To Setup DPO Group for WooCommerce](https://appinlet.com/wp-content/uploads/2021/01/How-To-Setup-DPO-Group-for-WooCommerce.jpg)](https://www.youtube.com/watch?v=AWZ13mdru2E "How To Setup DPO Group for WooCommerce")
+[![How To Setup DPO Pay for WooCommerce](https://appinlet.com/wp-content/uploads/2021/01/How-To-Setup-DPO-Group-for-WooCommerce.jpg)](https://www.youtube.com/watch?v=AWZ13mdru2E "How To Setup DPO Pay for WooCommerce")
 Please navigate to the [releases page](https://github.com/DPO-Group/DPO_WooCommerce/releases), download the
-latest release (v1.1.1) and unzip. You will then be able to follow the integration guide PDF which is included in the
+latest release (v1.1.2) and unzip. You will then be able to follow the integration guide PDF which is included in the
 zip.
 
 ## Collaboration

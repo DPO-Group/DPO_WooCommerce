@@ -1,28 +1,28 @@
-=== DPO Group for WooCommerce ===
+=== DPO Pay for WooCommerce ===
 Contributors: appinlet
-Tags: ecommerce, e-commerce, woocommerce, automattic, payment, dpo, dpo group, app inlet, credit card, payment request
+Tags: ecommerce, e-commerce, woocommerce, automattic, payment, dpo, dpo pay, dpo group, app inlet, credit card, payment request
 Requires at least: 5.6
-Tested up to: 5.9
-Requires PHP: 7.4
-Stable tag: 1.1.1
+Tested up to: 6.1
+Requires PHP: 8.0
+Stable tag: 1.1.2
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-This is the official DPO Group extension to receive payments for WooCommerce.
+This is the official DPO Pay extension to receive payments for WooCommerce.
 
 == Description ==
 
-The DPO Group plugin for WooCommerce lets you accept online payments, including credit and debit cards, digital wallets and other payment methods.
+The DPO Pay plugin for WooCommerce lets you accept online payments, including credit and debit cards, digital wallets and other payment methods.
 
-== Why Choose DPO Group? ==
+== Why Choose DPO Pay? ==
 
 We provide a secure checkout experience for your shoppers with a wealth of payment methods to choose from, knowing that intelligent fraud protection engines monitor your transactions around the clock.
 
 == FAQ's ==
 
-= Does this require a DPO Group merchant account? =
+= Does this require a DPO Pay merchant account? =
 
-Yes! You need to sign up with DPO Group to receive a Company Token key and other details for this gateway to function. You can do so at [dpogroup.com/get-started/](https://dpogroup.com/get-started/) or by emailing [sales1@dpogroup.com](mailto:sales1@dpogroup.com).
+Yes! You need to sign up with DPO Pay to receive a Company Token key and other details for this gateway to function. You can do so at [dpogroup.com/get-started/](https://dpogroup.com/get-started/) or by emailing [sales1@dpogroup.com](mailto:sales1@dpogroup.com).
 
 = Does this require an SSL certificate? =
 
@@ -30,19 +30,24 @@ We do recommend obtaining an SSL certificate to allow an additional layer of saf
 
 = Where can I find API documentation? =
 
-For help setting up and configuring the DPO Group plugin, please refer to our [user guide](https://github.com/DPO-Group/DPO_WooCommerce).
+For help setting up and configuring the DPO Pay plugin, please refer to our [user guide](https://github.com/DPO-Group/DPO_WooCommerce).
 
 = I need some assistance. Whom can I contact? =
 
-Need help to configure this plugin? Feel free to connect with our DPO Group Support Team by emailing us at [support@dpogroup.com](mailto:support@dpogroup.com) or give us a call at +254 (0) 709 947947.
+Need help to configure this plugin? Feel free to connect with our DPO Pay Support Team by emailing us at [support@dpogroup.com](mailto:support@dpogroup.com) or give us a call at +254 (0) 709 947947.
 
 == Screenshots ==
-1. WooComemrce Admin Payments Screen
-2. WooComemrce Admin DPO Group Primary Settings
-3. WooComemrce Admin DPO Group Additional Settings
-4. WooComemrce Admin Product Page Settings
+1. WooCommerce Admin Payments Screen
+2. WooCommerce Admin DPO Pay Primary Settings
+3. WooCommerce Admin DPO Pay Additional Settings
+4. WooCommerce Admin Product Page Settings
 
 == Changelog ==
+= 1.1.2 - 2023-02-16 =
+ * Tested on WooCommerce 7.3.0 and Wordpress 6.1.1.
+ * Update for PHP 8.0.
+ * Bug fixes and improvements.
+
 = 1.1.1 - 2022-02-02 =
  * Tested on WooCommerce 6.0 and Wordpress 5.9.
  * Move plugin to WordPress.org.

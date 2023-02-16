@@ -1,0 +1,91 @@
+*** DPO Pay for WooCommerce Changelog ***
+= 1.1.2 - 2023-02-16 =
+ * Tested on WooCommerce 7.3.0 and Wordpress 6.1.1.
+ * Update for PHP 8.0.
+ * Bug fixes and improvements.
+
+= 1.1.1 - 2022-02-02 =
+ * Tested on WooCommerce 6.0 and Wordpress 5.9.
+ * Move plugin to WordPress.org.
+ * Add debug logging in the order side.
+ * Add test for curl extension.
+ * Add card icon selection feature.
+
+= 1.1.0 - 2021-06-28 =
+ * Tested on WooCommerce 5.4.1 and Wordpress 5.7.2.
+ * Add logging in cron job.
+ * Add DPO order reference to narrative.
+ * Add DPO payment icons.
+ * Add Push Payments handling.
+ * Add cron checks for old and unpaid orders using WP cron scheduling.
+ * Add new <TransactionSource> tag.
+ * Code quality improve.
+ * Add support for MWK.
+ * Change GitHub url.
+
+= 1.0.16 - 2020-06-11 =
+  * Improve HTTP error display.
+  * Test with WC 4.2 and WP 5.4.2.
+  * Add backwards compatibility with previous url structures.
+
+= 1.0.15 - 2020-06-02 =
+  * Compatibility for WC4 and PHP7.3.
+  * Added test configuration.
+  * Updated endpoints.
+  * Improved cancel handling.
+  * Improved error handling.
+
+= 1.0.14 - 2019-11-01 =
+  * Add 'DPO Pay URL' feature.
+  * Add 'Add Order Meta to Service' feature.
+  * Add 'Add Order Meta to CompanyAccRef' feature.
+  * Add 'Default DPO Service Type' feature.
+  * Fix 'wp_enqueue_scripts' and 'frontend_scripts_and_styles' warnings.
+
+= 1.0.13 - 2019-10-31 =
+  * Add order status workflow to settings. PLEASE NOTE: If you had previously selected
+  'Reduce Stock Automatically' to 'no', change your order status setting to 'on-hold'.
+
+= 1.0.12 - 2019-10-30 =
+  * Push XOF if CFA selected.
+
+= 1.0.11 - 2019-10-17 =
+  * WooCommerce 3 Support.
+  * Fix broken 'Pay Now' link in WooCommerce emails.
+  * Change DPO Group branding.
+  * Move to GitHub.
+
+= 1.0.10 - 2019-08-23 =
+  *  Multisite activation improvements.
+
+= 1.0.9 =
+  *  Updated DPO default checkout image.
+
+= 1.0.8 =
+  *  Added to cURL SSL version 6 and DPO URL version to 6.
+
+= 1.0.7 =
+  *  Banner images and text updated.
+
+= 1.0.6 =
+  * Order status bug fixed.
+
+= 1.0.5 =
+  * Bug fix.
+
+= 1.0.4 =
+ * Added checkout image and image url settings fields to 3G Direct Pay settings.
+
+= 1.0.3 =
+ * Bug fix.
+
+= 1.0.2 =
+ * Removed service description from product settings.
+
+= 1.0.1 =
+ * Add: 3G URL input.
+ * Add: PTL Type select box.
+ * Add: PTL input.
+
+= 1.0.0 =
+ * First Public Release.
