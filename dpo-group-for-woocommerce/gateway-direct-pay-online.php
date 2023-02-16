@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: DPO Group for WooCommerce
+ * Plugin Name: DPO Pay for WooCommerce
  * Plugin URI: https://github.com/DPO-Group/DPO_WooCommerce
- * Description: Receive payments using the African DPO Group payments provider.
+ * Description: Receive payments using the African DPO Pay payments provider.
  * Author: DPO Group
  * Author URI: https://www.dpogroup.com/
- * Version: 1.1.0
+ * Version: 1.1.2
  * Requires at least: 4.4
  * Tested up to: 5.9
  * WC tested up to: 5.6.0
@@ -14,7 +14,7 @@
  * Developer: App Inlet (Pty) Ltd
  * Developer URI: https://www.appinlet.com/
  *
- * Copyright: © 2022 DPO Group
+ * Copyright: © 2023 DPO Group
  * License: GNU General Public License v3.0
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: dpo-group-for-woocommerce
@@ -26,15 +26,15 @@ global $woothemes;
 $woothemes = 'woothemes';
 
 // Exit if accessed directly.
-if ( ! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit();
 }
 
 // Check if WooCommerce is active, if not then deactivate and show error message
-if ( ! is_plugin_active('woocommerce/woocommerce.php')) {
+if (!is_plugin_active('woocommerce/woocommerce.php')) {
     deactivate_plugins(plugin_basename(__FILE__));
     wp_die(
-        "<strong>DPO Group</strong> requires <strong>WooCommerce</strong> plugin to work normally. Please activate it or install it from <a href=\"http://wordpress.org/plugins/woocommerce/\" target=\"_blank\">here</a>.<br /><br />Back to the WordPress <a href='" . get_admin_url(
+        "<strong>DPO Pay</strong> requires <strong>WooCommerce</strong> plugin to work normally. Please activate it or install it from <a href=\"http://wordpress.org/plugins/woocommerce/\" target=\"_blank\">here</a>.<br /><br />Back to the WordPress <a href='" . get_admin_url(
             null,
             'plugins.php'
         ) . "'>Plugins page</a>."
@@ -51,11 +51,11 @@ if(file_exists($target . $new_file)) {
 add_action('plugins_loaded', 'gdpo_woocommerce_dpo_init');
 register_deactivation_hook(__FILE__, 'gdpo_delete_dbo_custom_order_table');
 
-// Main DPO Group plugin function
+// Main DPO Pay plugin function
 function gdpo_woocommerce_dpo_init()
 {
     // Check if woocommerce  installed
-    if ( ! class_exists('WC_Payment_Gateway')) {
+    if (!class_exists('WC_Payment_Gateway')) {
         return;
     }
 
@@ -87,7 +87,7 @@ function gdpo_woocommerce_dpo_init()
     add_action('dpo_order_query_cron_hook', [WCGatewayDpoCron::class, 'dpo_order_query_cron']);
 
     $nxt = wp_next_scheduled('dpo_order_query_cron_hook');
-    if ( ! $nxt) {
+    if (!$nxt) {
         wp_schedule_event(time(), 'hourly', 'dpo_order_query_cron_hook');
     }
 }
