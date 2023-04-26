@@ -5,11 +5,11 @@
  * Description: Receive payments using the African DPO Pay payments provider.
  * Author: DPO Group
  * Author URI: https://www.dpogroup.com/
- * Version: 1.1.2
- * Requires at least: 4.4
- * Tested up to: 5.9
- * WC tested up to: 5.6.0
- * WC requires at least: 4.9
+ * Version: 1.1.3
+ * Requires at least: 5.6
+ * Tested up to: 6.2
+ * WC tested up to: 7.6.0
+ * WC requires at least: 6.0
  *
  * Developer: App Inlet (Pty) Ltd
  * Developer URI: https://www.appinlet.com/
@@ -166,3 +166,84 @@ function recurseRmdir($dir) {
   }
   return rmdir($dir);
 }
+
+/**
+ * Registers WooCommerce Blocks integration.
+ *
+ */
+class WC_Dpo_Payments
+{
+    /**
+     * Plugin bootstrapping.
+     */
+    public static function init()
+    {
+        // Registers WooCommerce Blocks integration.
+        add_action(
+            'woocommerce_blocks_loaded',
+            array(__CLASS__, 'woocommerce_gateway_dpo_woocommerce_block_support')
+        );
+    }
+
+    /**
+     * Add the Dpo Payment gateway to the list of available gateways.
+     *
+     * @param array
+     */
+    public static function add_gateway($gateways)
+    {
+        $gateways[] = 'WC_Gateway_Dpo';
+
+        return $gateways;
+    }
+
+    /**
+     * Plugin includes.
+     */
+    public static function includes()
+    {
+        // Make the WC_Gateway_Dpo class available.
+        if (class_exists('WC_Payment_Gateway')) {
+            require_once 'classes/WC_Gateway_Dpo.php';
+        }
+    }
+
+    /**
+     * Plugin url.
+     *
+     * @return string
+     */
+    public static function plugin_url()
+    {
+        return untrailingslashit(plugins_url('/', __FILE__));
+    }
+
+    /**
+     * Plugin url.
+     *
+     * @return string
+     */
+    public static function plugin_abspath()
+    {
+        return trailingslashit(plugin_dir_path(__FILE__));
+    }
+
+    /**
+     * Registers WooCommerce Blocks integration.
+     *
+     */
+    public static function woocommerce_gateway_dpo_woocommerce_block_support()
+    {
+        if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
+            require_once plugin_dir_path(__FILE__) . 'includes/blocks/class-wc-dpo-payments-blocks.php';
+            add_action(
+                'woocommerce_blocks_payment_method_type_registration',
+                function (Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry) {
+                    $payment_method_registry->register(new WC_Gateway_Dpo_Blocks_Support());
+                }
+            );
+        }
+    }
+}
+
+WC_Dpo_Payments::init();

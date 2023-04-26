@@ -119,6 +119,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
             $this->company_token        = $this->test_company_token;
             $this->default_service_type = $this->test_default_service_type;
             $this->url                  = $this->test_url;
+            $this->dpo_api_url          = $this->url;
             $this->pay_url              = $this->test_pay_url;
         } else {
             $this->company_token        = $this->live_company_token;
@@ -128,7 +129,8 @@ class WCGatewayDPO extends WC_Payment_Gateway
             if ($this->url == 'https://secure.3gdirectpay.com') {
                 $this->url .= '/API/v6/';
             }
-            $this->pay_url = $this->live_pay_url;
+            $this->dpo_api_url = $this->url;
+            $this->pay_url     = $this->live_pay_url;
             // Add backwards compatibility with previous url structure
             if ($this->pay_url == 'pay.php' || $this->pay_url == 'payv2.php') {
                 $this->pay_url = 'https://secure.3gdirectpay.com/' . $this->pay_url;
@@ -609,7 +611,12 @@ class WCGatewayDPO extends WC_Payment_Gateway
             update_post_meta($order_id, 'dpo_trans_token', $xml->TransToken[0]->__toString());
 
             // Create DPO Pay gateway payment URL
-            $paymentURL = $this->pay_url . "?ID=" . $xml->TransToken[0];
+
+            if ($this->pay_url == 'https://payment.dpo.co.tz/') {
+                $paymentURL = $this->pay_url . "?token=" . $xml->TransToken[0];
+            } else {
+                $paymentURL = $this->pay_url . "?ID=" . $xml->TransToken[0];
+            }
 
             $responseData = array(
                 'redirect' => $paymentURL,
@@ -812,8 +819,8 @@ class WCGatewayDPO extends WC_Payment_Gateway
                      $param["amount"] . '
                         <PaymentCurrency>' . $param["currency"] . '</PaymentCurrency>
                         <CompanyRef>' . $param["order_id"] . '</CompanyRef>
-                        <RedirectURL>' . htmlspecialchars($returnURL) . '</RedirectURL>
-                        <BackURL>' . htmlspecialchars($cancelURL) . '</BackURL>
+                        <RedirectURL>' . urlencode(htmlspecialchars($returnURL)) . '</RedirectURL>
+                        <BackURL>' . urlencode(htmlspecialchars($cancelURL)) . '</BackURL>
                         <CompanyRefUnique>0</CompanyRefUnique>
                         ' . $param["ptl_type"] .
                      $param["ptl"] . '
@@ -1061,6 +1068,46 @@ class WCGatewayDPO extends WC_Payment_Gateway
             }
 
             $icon        .= '<br><div style="padding: 25px 0;" id="dpo-icon-container">';
+            $dpoImageUrl = plugin_dir_url(__FILE__) . '../assets/images/';
+            foreach ($this->dpoIconsNameList as $key => $dpoIconName) {
+                if (in_array($key, $payment_icons)) {
+                    $icon .= <<<ICON
+<img src="{$dpoImageUrl}dpo-{$key}.png" alt="{$dpoIconName}"
+style="width:auto !important; height: 25px !important; border: none !important; float: left !important;margin-right:5px;margin-bottom: 5px;">
+ICON;
+                }
+            }
+            $icon .= '</div><br>';
+
+            return apply_filters('woocommerce_gateway_icon', $icon, $this->id);
+        }
+    }
+
+    /**
+     * get_icon
+     *
+     * Add SVG icon to checkout
+     */
+    public function get_block_icon()
+    {
+        $settings      = get_option('woocommerce_woocommerce_dpo_settings', false);
+        $payment_icons = $settings['payment_icons'];
+        $dpoLogo       = $settings['dpo_logo'] ?? "";
+
+        if ($payment_icons) {
+            $icon = "";
+
+            if ($dpoLogo === 'yes' || $dpoLogo === 'on') {
+                $icon .= '<div style="width:100%:><div style="float:left">' . $this->get_description() . "</div>" .
+                         '<div style="float:right;margin-top:-30px">' .
+                         '<img src="' . $iconSrc = esc_url(
+                                                       WC_HTTPS::force_https_url($this->icon)
+                                                   ) . '" alt="' . esc_attr(
+                                                       $this->get_title()
+                                                   ) . '" style="width: 100% !important; height: 25px !important; border: none !important;"></div></div>';
+            }
+
+            $icon        .= '<div style="padding: 25px 0;" id="dpo-icon-container">';
             $dpoImageUrl = plugin_dir_url(__FILE__) . '../assets/images/';
             foreach ($this->dpoIconsNameList as $key => $dpoIconName) {
                 if (in_array($key, $payment_icons)) {
