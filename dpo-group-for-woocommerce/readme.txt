@@ -2,9 +2,9 @@
 Contributors: appinlet
 Tags: ecommerce, e-commerce, woocommerce, automattic, payment, dpo, dpo pay, dpo group, app inlet, credit card, payment request
 Requires at least: 5.6
-Tested up to: 6.1
+Tested up to: 6.2
 Requires PHP: 8.0
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -43,6 +43,11 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
 4. WooCommerce Admin Product Page Settings
 
 == Changelog ==
+= 1.1.3 - 2023-04-26 =
+ * Tested on WooCommerce 7.6.0 and Wordpress 6.2.
+ * Add support for WooCommerce Blocks.
+ * Bug fixes and improvements.
+
 = 1.1.2 - 2023-02-16 =
  * Tested on WooCommerce 7.3.0 and Wordpress 6.1.1.
  * Update for PHP 8.0.
@@ -54,22 +59,5 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
  * Add debug logging in the order side.
  * Add test for curl extension.
  * Add card icon selection feature.
-
-= 1.1.0 - 2021-06-28 =
- * Tested on WooCommerce 5.4.1 and Wordpress 5.7.2.
- * Add logging in cron job.
- * Add DPO order reference to narrative.
- * Add DPO payment icons.
- * Add Push Payments handling.
- * Add cron checks for old and unpaid orders using WP cron scheduling.
- * Add new <TransactionSource> tag.
- * Code quality improve.
- * Add support for MWK.
- * Change GitHub url.
-
-= 1.0.16 - 2020-06-11 =
-  * Improve HTTP error display.
-  * Test with WC 4.2 and WP 5.4.2.
-  * Add backwards compatibility with previous url structures.
 
 [See changelog for all versions](https://raw.githubusercontent.com/DPO-Group/DPO_WooCommerce/master/changelog.txt).
