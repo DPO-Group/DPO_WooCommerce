@@ -719,6 +719,8 @@ class WCGatewayDPO extends WC_Payment_Gateway
         // Get an instance of the WC_Order object
         $order = wc_get_order($order_id);
 
+		$order = apply_filters('dpocard_solution_update_order', $order);
+
         // The loop to get the order items which are WC_Order_Item_Product objects since WC 3+
         foreach ($order->get_items() as $item) {
             // Get the product ID
