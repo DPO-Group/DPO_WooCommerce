@@ -1,4 +1,22 @@
-*** DPO Group for WooCommerce Changelog ***
+*** DPO Pay for WooCommerce Changelog ***
+= 1.1.4 - 2024-01-04 =
+ * Tested on WooCommerce 8.4.0 and Wordpress 6.4.
+ * Add support for HPOS.
+ * Decline transactions if the reference and order ID don't match.
+ * Amend Return and Cancel Urls for better compatibility.
+ * Add DPO Pay order filter.
+ * Change Product Invocation Method for better compatibility.
+
+= 1.1.3 - 2023-04-26 =
+ * Tested on WooCommerce 7.6.0 and Wordpress 6.2.
+ * Add support for WooCommerce Blocks.
+ * Bug fixes and improvements.
+
+= 1.1.2 - 2023-02-16 =
+ * Tested on WooCommerce 7.3.0 and Wordpress 6.1.1.
+ * Update for PHP 8.0.
+ * Bug fixes and improvements.
+
 = 1.1.1 - 2022-02-02 =
  * Tested on WooCommerce 6.0 and Wordpress 5.9.
  * Move plugin to WordPress.org.

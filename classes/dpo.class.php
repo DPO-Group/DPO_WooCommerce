@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2023 DPO Group
+ * Copyright (c) 2024 DPO Group
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -509,7 +509,14 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 'default'     => '',
                 'options'     => $this->getPaymentIcons(),
             ],
-
+            'order_filter'                    => array(
+                'title'       => __("DPO Pay order filter", 'woocommerce'),
+                'label'       => __("Enable 'dpo_pay_order_create' filter (use with caution)", 'woocommerce'),
+                'type'        => 'checkbox',
+                'description' => __("Enable 'dpo_pay_order_create'", 'woocommerce'),
+                'desc_tip'    => true,
+                'default'     => 'no',
+            )
         );
     }
 
@@ -719,6 +726,13 @@ class WCGatewayDPO extends WC_Payment_Gateway
         // Get an instance of the WC_Order object
         $order = wc_get_order($order_id);
 
+        // Load the settings
+        $settings = get_option('woocommerce_woocommerce_dpo_settings', false);
+
+        if ($settings['order_filter'] === "yes") {
+            $order = apply_filters('dpo_pay_order_create', $order);
+        }
+
         // The loop to get the order items which are WC_Order_Item_Product objects since WC 3+
         foreach ($order->get_items() as $item) {
             // Get the product ID
@@ -728,7 +742,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
             $product_data = get_post_meta($product_id);
 
             // Get product details
-            $single_product = new WC_Product($product_id);
+            $single_product = wc_get_product($product_id);
 
             $serviceType = !empty($product_data["service_type"][0]) ? $product_data["service_type"][0] : $this->default_service_type;
             $serviceDesc = str_replace('&', 'and', $single_product->post->post_title);
@@ -760,7 +774,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                     // Check if multiple meta keys were supplied
                     $serviceDesc = '';
                     foreach ($order_fields_array as $order_field) {
-                        $serviceDesc .= get_post_meta($order_id, $order_field, true) . ',';
+                        $serviceDesc .= $order->get_meta($order_field, true) . ',';
                     }
                     $serviceDesc = substr_replace(
                         $serviceDesc,
@@ -768,7 +782,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                         -1
                     ); // Final $serviceDesc like META_KEY1,META_KEY2
                 } else {
-                    $serviceDesc = get_post_meta($order_id, $serviceDesc, true);
+                    $serviceDesc = $order->get_meta($serviceDesc, true);
                 }
                 $service .= '<Service>
                             <ServiceType>' . $serviceType . '</ServiceType>
@@ -789,7 +803,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 // Check if multiple meta keys were supplied
                 $companyAccRef = '';
                 foreach ($order_fields_array as $order_field) {
-                    $companyAccRef .= get_post_meta($order_id, $order_field, true) . ',';
+                    $companyAccRef .= $order->get_meta($order_field, true) . ',';
                 }
                 $companyAccRef = substr_replace(
                     $companyAccRef,
@@ -797,7 +811,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                     -1
                 ); // Final $companyAccRef like META_KEY1,META_KEY2
             } else {
-                $companyAccRef = get_post_meta($order_id, $companyAccRef, true);
+                $companyAccRef = $order->get_meta($companyAccRef, true);
             }
             $companyAccRef = '<CompanyAccRef>' . $companyAccRef . '</CompanyAccRef>';
         }
@@ -819,8 +833,8 @@ class WCGatewayDPO extends WC_Payment_Gateway
                      $param["amount"] . '
                         <PaymentCurrency>' . $param["currency"] . '</PaymentCurrency>
                         <CompanyRef>' . $param["order_id"] . '</CompanyRef>
-                        <RedirectURL>' . urlencode(htmlspecialchars($returnURL)) . '</RedirectURL>
-                        <BackURL>' . urlencode(htmlspecialchars($cancelURL)) . '</BackURL>
+                        <RedirectURL>' . $returnURL . '</RedirectURL>
+                        <BackURL>' . $cancelURL . '</BackURL>
                         <CompanyRefUnique>0</CompanyRefUnique>
                         ' . $param["ptl_type"] .
                      $param["ptl"] . '
@@ -849,7 +863,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
      *
      * @return bool|string
      */
-    public function createCURL($input_xml)
+    public function createCURL($input_xml, $is_verify = false)
     {
         self::$logging ? self::$logger->add('dpo_order', 'createCurl: ' . $input_xml) : '';
         self::$logging ? self::$logger->add('dpo_order', 'dpo_api_url: ' . $this->dpo_api_url) : '';
@@ -872,7 +886,8 @@ class WCGatewayDPO extends WC_Payment_Gateway
         );
 
         if (in_array($this->url, $whitelist)) {
-            $wp_remote_post = wp_remote_post($this->url, $args);
+            $api_url = $is_verify ? 'https://secure.3gdirectpay.com/API/v7/' : $this->url;
+            $wp_remote_post = wp_remote_post($api_url, $args);
             $response       = wp_remote_retrieve_body($wp_remote_post);
             self::$logging ? self::$logger->add('dpo_order', 'Response: ' . $response) : '';
 
@@ -917,7 +932,8 @@ class WCGatewayDPO extends WC_Payment_Gateway
 
         if ($response) {
             // Check selected order status workflow
-            if ($response->Result[0] == '000') {
+            if ($response->Result[0] == '000' && $order->get_id() == (int)$response->CompanyRef->__toString()) {
+
                 switch ($this->successful_status) {
                     case 'on-hold':
                         $order->update_status(
@@ -950,21 +966,22 @@ class WCGatewayDPO extends WC_Payment_Gateway
                         do_action('dpo_template_redirect');
                         break;
                     default:
-                        $order->update_status(
-                            'processing',
-                            __(self::ORDER_APPROVAL_MSG, 'woocommerce')
-                        );
-                        $order->add_order_note(self::ORDER_APPROVAL_MSG);
-                        $order->add_order_note(
-                            'Customer Credit Type: ' . $response->CustomerCreditType->__toString()
-                        );
-                        update_post_meta(
-                            $order_id,
-                            'customer_credit_type',
-                            $response->CustomerCreditType->__toString()
-                        );
-                        $order->payment_complete();
-                        do_action('dpo_template_redirect');
+                            $order->update_status(
+                                'processing',
+                                __(self::ORDER_APPROVAL_MSG, 'woocommerce')
+                            );
+                            $order->add_order_note(self::ORDER_APPROVAL_MSG);
+                            $order->add_order_note(
+                                'Customer Credit Type: ' . $response->CustomerCreditType->__toString()
+                            );
+                            update_post_meta(
+                                $order_id,
+                                'customer_credit_type',
+                                $response->CustomerCreditType->__toString()
+                            );
+                            $order->payment_complete();
+                            do_action('dpo_template_redirect');
+
                         break;
                 }
             } else {
@@ -1035,7 +1052,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                       <TransactionToken>' . $transactionToken . '</TransactionToken>
                     </API3G>';
 
-        $response = $this->createCURL($input_xml);
+        $response = $this->createCURL($input_xml, true);
 
         if ($response !== false && substr($response, 0, 5) === '<?xml') {
             // Convert the XML result into array

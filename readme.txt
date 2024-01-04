@@ -1,10 +1,10 @@
 === DPO Pay for WooCommerce ===
 Contributors: appinlet
 Tags: ecommerce, e-commerce, woocommerce, automattic, payment, dpo, dpo pay, dpo group, app inlet, credit card, payment request
-Requires at least: 5.6
-Tested up to: 6.2
+Requires at least: 6.2
+Tested up to: 6.4
 Requires PHP: 8.0
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -43,6 +43,14 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
 4. WooCommerce Admin Product Page Settings
 
 == Changelog ==
+= 1.1.4 - 2024-01-04 =
+ * Tested on WooCommerce 8.4.0 and Wordpress 6.4.
+ * Add support for HPOS.
+ * Decline transactions if the reference and order ID don't match.
+ * Amend Return and Cancel Urls for better compatibility.
+ * Add DPO Pay order filter.
+ * Change Product Invocation Method for better compatibility.
+
 = 1.1.3 - 2023-04-26 =
  * Tested on WooCommerce 7.6.0 and Wordpress 6.2.
  * Add support for WooCommerce Blocks.
@@ -52,12 +60,5 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
  * Tested on WooCommerce 7.3.0 and Wordpress 6.1.1.
  * Update for PHP 8.0.
  * Bug fixes and improvements.
-
-= 1.1.1 - 2022-02-02 =
- * Tested on WooCommerce 6.0 and Wordpress 5.9.
- * Move plugin to WordPress.org.
- * Add debug logging in the order side.
- * Add test for curl extension.
- * Add card icon selection feature.
 
 [See changelog for all versions](https://raw.githubusercontent.com/DPO-Group/DPO_WooCommerce/master/changelog.txt).
