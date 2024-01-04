@@ -1,35 +1,249 @@
 <?php
 /**
- *
- * Plugin Name: DPO Group plugin for WooCommerce
+ * Plugin Name: DPO Pay for WooCommerce
  * Plugin URI: https://github.com/DPO-Group/DPO_WooCommerce
- * Description: Accept payments for WooCommerce using DPO Group's online payments service
- * Version: 1.1.1
- * Tested: 5.4.2
+ * Description: Receive payments using the African DPO Pay payments provider.
  * Author: DPO Group
- * Author URI: https://www.dpogroup.com/africa/
+ * Author URI: https://www.dpogroup.com/
+ * Version: 1.1.4
+ * Requires at least: 6.2
+ * Tested up to: 6.4
+ * WC tested up to: 8.3
+ * WC requires at least: 8.1
+ * Requires PHP: 8.0
+ *
  * Developer: App Inlet (Pty) Ltd
  * Developer URI: https://www.appinlet.com/
  *
- * WC requires at least: 3.0
- * WC tested up to: 4.2
- *
- * Copyright: © 2021 DPO Group
+ * Copyright: © 2024 DPO Group
  * License: GNU General Public License v3.0
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
+ * Text Domain: dpo-group-for-woocommerce
  */
 
-$current_folder = plugin_basename(__DIR__);
-$new_folder     = 'dpo-group-for-woocommerce';
-$new_file       = '/gateway-direct-pay-online.php';
-$source         = WP_PLUGIN_DIR . '/' . $current_folder . '/' . $new_folder;
-$target         = WP_PLUGIN_DIR . '/' . $new_folder;
-if (file_exists($source . $new_file)) {
-    rename($source, $target);
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+global $woothemes;
+$woothemes = 'woothemes';
+
+// Exit if accessed directly.
+if (!defined('ABSPATH')) {
+    exit();
 }
 
-$new_plugin = $new_folder . $new_file;
-if (is_plugin_inactive($new_plugin)) {
-    activate_plugin($new_plugin);
+// Check if WooCommerce is active, if not then deactivate and show error message
+if (!is_plugin_active('woocommerce/woocommerce.php')) {
+    deactivate_plugins(plugin_basename(__FILE__));
+    wp_die(
+        "<strong>DPO Pay</strong> requires <strong>WooCommerce</strong> plugin to work normally. Please activate it or install it from <a href=\"http://wordpress.org/plugins/woocommerce/\" target=\"_blank\">here</a>.<br /><br />Back to the WordPress <a href='" . get_admin_url(
+            null,
+            'plugins.php'
+        ) . "'>Plugins page</a>."
+    );
 }
-deactivate_plugins('woocommerce-gateway-direct-pay-online/gateway-direct-pay-online.php');
+
+add_action('plugins_loaded', 'gdpo_woocommerce_dpo_init');
+register_deactivation_hook(__FILE__, 'gdpo_delete_dbo_custom_order_table');
+
+// Main DPO Pay plugin function
+function gdpo_woocommerce_dpo_init()
+{
+    // Check if woocommerce  installed
+    if (!class_exists('WC_Payment_Gateway')) {
+        return;
+    }
+
+    require_once plugin_basename('classes/dpo.class.php');
+
+    // Add the Gateway to WooCommerce
+    function gdpo_woocommerce_add_gateway_dpo($methods)
+    {
+        $methods[] = 'WCGatewayDPO';
+
+        return $methods;
+    }
+
+    add_filter('woocommerce_payment_gateways', 'gdpo_woocommerce_add_gateway_dpo');
+
+    // Add action for notify
+    add_action('woocommerce_api_check_dpo_notify', [WCGatewayDPO::class, 'check_dpo_notify']);
+
+    // Add actions for cron jobs
+    add_action(
+        'woocommerce_order_actions',
+        [WCGatewayDpoCron::class, 'dpo_add_order_meta_box_action']
+    );
+    add_action(
+        'woocommerce_order_action_do_dpo_cron',
+        [WCGatewayDpoCron::class, 'dpo_order_query_cron']
+    );
+    add_action('dpo_order_query_cron_admin', [WCGatewayDpoCron::class, 'dpo_order_query_cron']);
+    add_action('dpo_order_query_cron_hook', [WCGatewayDpoCron::class, 'dpo_order_query_cron']);
+
+    $nxt = wp_next_scheduled('dpo_order_query_cron_hook');
+    if (!$nxt) {
+        wp_schedule_event(time(), 'hourly', 'dpo_order_query_cron_hook');
+    }
+}
+
+function gdpo_delete_dbo_custom_order_table()
+{
+    // Delete custom table for DPO order data
+    global $wpdb;
+    $dpo_table_name = $wpdb->prefix . 'dpo_order_data';
+    $sql            = "drop table if exists $dpo_table_name";
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    $wpdb->query($sql);
+}
+
+// Adding custom tabs (Service_type) to woocommerce product data settingds
+function gdpo_custom_tab_options_tab()
+{
+    global $woothemes;
+    ?>
+    <ul>
+        <li class="custom_tab"><a href="#dpo_service_tab_data"> <?php
+                _e('DPO Service Type', $woothemes); ?></a></li>
+    </ul>
+    <?php
+}
+
+add_action('woocommerce_product_write_panel_tabs', 'gdpo_custom_tab_options_tab');
+
+function gdpo_custom_tab_options()
+{
+    global $post;
+    global $woothemes;
+
+    $gdpo_custom_tab_options = array(
+        'service_type' => get_post_meta($post->ID, 'service_type', true),
+    );
+
+    $service_type = @$gdpo_custom_tab_options['service_type'];
+
+    ?>
+    <div id="dpo_service_tab_data" class="panel woocommerce_options_panel">
+
+        <div class="options_group custom_tab_options">
+            <p class="form-field">
+                <label><?php
+                    _e('Service Type:', $woothemes); ?></label>
+                <input type="text" name="service_type" value="<?php
+                echo esc_attr($service_type); ?>" placeholder="<?php
+                _e('For example: 45', $woothemes); ?>"/>
+            </p>
+
+        </div>
+    </div>
+    <?php
+}
+
+add_action('woocommerce_product_data_panels', 'gdpo_custom_tab_options');
+
+/**
+ * Process meta
+ *
+ * Processes the custom tab options when a post is saved
+ */
+function gdpo_process_product_meta_custom_tab($post_id)
+{
+    $service_type = sanitize_text_field($_POST['service_type']);
+    update_post_meta($post_id, 'service_type', $service_type);
+}
+
+add_action('woocommerce_process_product_meta', 'gdpo_process_product_meta_custom_tab');
+
+
+/**
+ * Registers WooCommerce Blocks integration.
+ *
+ */
+class WC_Dpo_Payments
+{
+    /**
+     * Plugin bootstrapping.
+     */
+    public static function init()
+    {
+        // Registers WooCommerce Blocks integration.
+        add_action(
+            'woocommerce_blocks_loaded',
+            array(__CLASS__, 'woocommerce_gateway_dpo_woocommerce_block_support')
+        );
+    }
+
+    /**
+     * Add the Dpo Payment gateway to the list of available gateways.
+     *
+     * @param array
+     */
+    public static function add_gateway($gateways)
+    {
+        $gateways[] = 'WC_Gateway_Dpo';
+
+        return $gateways;
+    }
+
+    /**
+     * Plugin includes.
+     */
+    public static function includes()
+    {
+        // Make the WC_Gateway_Dpo class available.
+        if (class_exists('WC_Payment_Gateway')) {
+            require_once 'classes/WC_Gateway_Dpo.php';
+        }
+    }
+
+    /**
+     * Plugin url.
+     *
+     * @return string
+     */
+    public static function plugin_url()
+    {
+        return untrailingslashit(plugins_url('/', __FILE__));
+    }
+
+    /**
+     * Plugin url.
+     *
+     * @return string
+     */
+    public static function plugin_abspath()
+    {
+        return trailingslashit(plugin_dir_path(__FILE__));
+    }
+
+    /**
+     * Registers WooCommerce Blocks integration.
+     *
+     */
+    public static function woocommerce_gateway_dpo_woocommerce_block_support()
+    {
+        if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
+            require_once plugin_dir_path(__FILE__) . 'includes/blocks/class-wc-dpo-payments-blocks.php';
+            add_action(
+                'woocommerce_blocks_payment_method_type_registration',
+                function (Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry) {
+                    $payment_method_registry->register(new WC_Gateway_Dpo_Blocks_Support());
+                }
+            );
+        }
+    }
+}
+
+/**
+ * Declares support for HPOS.
+ *
+ * @return void
+ */
+function woocommerce_direct_pay_online_declare_hpos_compatibility() {
+    if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+    }
+}
+add_action( 'before_woocommerce_init', 'woocommerce_direct_pay_online_declare_hpos_compatibility' );
+
+
+WC_Dpo_Payments::init();

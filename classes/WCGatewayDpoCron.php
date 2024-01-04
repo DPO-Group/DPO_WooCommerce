@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2023 DPO Group
+ * Copyright (c) 2024 DPO Group
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -44,8 +44,9 @@ class WCGatewayDpoCron extends WCGatewayDPO
         self::logData($orders);
 
         foreach ($orders as $order) {
-            $order_id         = $order->ID;
-            $transactionToken = get_post_meta($order_id, 'dpo_trans_token', true);
+            $order_id     = $order->ID;
+            $order        = wc_get_order($order_id);
+            $transactionToken = $order->get_meta('dpo_trans_token', true);
             // Query DPO for status
             $order = wc_get_order($order_id);
 
