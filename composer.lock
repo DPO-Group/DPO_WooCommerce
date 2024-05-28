@@ -1,0 +1,60 @@
+{
+  "_readme": [
+    "This file locks the dependencies of your project to a known state",
+    "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+    "This file is @generated automatically"
+  ],
+  "content-hash": "799a0e68307d21da4949ab4b35b901b6",
+  "packages": [
+    {
+      "name": "dpo/dpo-pay-common",
+      "version": "v1.0.2",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/DPO-Group/DPO-Pay-Common.git",
+        "reference": "a3dd3cb03fa49e98767e2c91d8353ebfd12b3b93"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/DPO-Group/DPO-Pay-Common/zipball/a3dd3cb03fa49e98767e2c91d8353ebfd12b3b93",
+        "reference": "a3dd3cb03fa49e98767e2c91d8353ebfd12b3b93",
+        "shasum": ""
+      },
+      "require": {
+        "php": "^8.0"
+      },
+      "type": "library",
+      "autoload": {
+        "psr-4": {
+          "Dpo\\Common\\": "src/"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": [
+        "GPL-3.0"
+      ],
+      "authors": [
+        {
+          "name": "App Inlet (Pty) Ltd",
+          "email": "info@appinlet.com"
+        }
+      ],
+      "description": "DPO Pay common class for modules.",
+      "homepage": "https://github.com/DPO-Group/DPO-Pay-Common",
+      "support": {
+        "issues": "https://github.com/DPO-Group/DPO-Pay-Common/issues",
+        "source": "https://github.com/DPO-Group/DPO-Pay-Common/tree/v1.0.2"
+      },
+      "time": "2024-05-28T13:52:13+00:00"
+    }
+  ],
+  "packages-dev": [],
+  "aliases": [],
+  "minimum-stability": "stable",
+  "stability-flags": [],
+  "prefer-stable": false,
+  "prefer-lowest": false,
+  "platform": [],
+  "platform-dev": [],
+  "plugin-api-version": "2.6.0"
+}

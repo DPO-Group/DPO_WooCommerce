@@ -5,11 +5,11 @@
  * Description: Receive payments using the African DPO Pay payments provider.
  * Author: DPO Group
  * Author URI: https://www.dpogroup.com/
- * Version: 1.1.4
- * Requires at least: 6.2
- * Tested up to: 6.4
- * WC tested up to: 8.3
- * WC requires at least: 8.1
+ * Version: 1.1.5
+ * Requires at least: 5.6
+ * Tested up to: 6.5.3
+ * WC tested up to: 8.9.1
+ * WC requires at least: 6.0
  * Requires PHP: 8.0
  *
  * Developer: App Inlet (Pty) Ltd
@@ -238,12 +238,14 @@ class WC_Dpo_Payments
  *
  * @return void
  */
-function woocommerce_direct_pay_online_declare_hpos_compatibility() {
-    if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
-        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+function woocommerce_direct_pay_online_declare_hpos_compatibility()
+{
+    if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
     }
 }
-add_action( 'before_woocommerce_init', 'woocommerce_direct_pay_online_declare_hpos_compatibility' );
+
+add_action('before_woocommerce_init', 'woocommerce_direct_pay_online_declare_hpos_compatibility');
 
 
 WC_Dpo_Payments::init();
