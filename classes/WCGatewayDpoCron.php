@@ -44,8 +44,8 @@ class WCGatewayDpoCron extends WCGatewayDPO
         self::logData($orders);
 
         foreach ($orders as $order) {
-            $order_id     = $order->ID;
-            $order        = wc_get_order($order_id);
+            $order_id         = $order->ID;
+            $order            = wc_get_order($order_id);
             $transactionToken = $order->get_meta('dpo_trans_token', true);
             // Query DPO for status
             $order = wc_get_order($order_id);

@@ -7,11 +7,15 @@
  * Released under the GNU General Public License
  */
 
+use Dpo\Common\Dpo;
+
 if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
+$f = dirname(__DIR__, 1);
 require_once 'WCGatewayDpoCron.php';
+require_once "$f/vendor/autoload.php";
 
 /**
  * DPO Pay Gateway
@@ -58,33 +62,17 @@ class WCGatewayDPO extends WC_Payment_Gateway
         'paypal'         => 'PayPal',
     ];
     protected $plugin_url;
-    protected $company_token;
-    protected $test_company_token = '9F416C11-127B-4DE2-AC7F-D5710E4C5E0A';
     protected $live_company_token;
-    protected $default_service_type;
-    protected $test_default_service_type = '3854';
     protected $live_default_service_type;
     protected $successful_status;
-    protected $url;
-    protected $pay_url;
-    protected $test_url = 'https://secure1.sandbox.directpay.online/API/v6/';
-    protected $test_pay_url = 'https://secure1.sandbox.directpay.online/payv2.php';
-    protected $live_url = 'https://secure.3gdirectpay.com/API/v6/';
-    protected $live_pay_url = 'https://secure.3gdirectpay.com/payv2.php';
     protected $ptl_type;
     protected $ptl;
     protected $image_url;
     protected $order_meta_service;
     protected $order_meta_company_acc_ref;
-    protected $test_mode;
-    protected $dpo_api_url = 'https://secure.3gdirectpay.com/API/v6/';
 
     public function __construct()
     {
-        // Sandbox url not working any longer
-        $this->test_url     = $this->live_url;
-        $this->test_pay_url = $this->live_pay_url;
-
         $this->id                 = 'woocommerce_dpo';
         $this->plugin_url         = trailingslashit(plugins_url(null, dirname(__FILE__)));
         $this->icon               = $this->plugin_url . '/assets/images/dpo-pay.svg';
@@ -98,44 +86,17 @@ class WCGatewayDPO extends WC_Payment_Gateway
         $this->init_settings();
 
         // Define user set variables in settings
-        $dpo_url                          = $this->get_option('dpo_url');
-        $pay_url                          = $this->get_option('pay_url');
         $this->enabled                    = $this->get_option('enabled');
         $this->title                      = $this->get_option('title');
         $this->description                = $this->get_option('description');
         $this->live_company_token         = $this->get_option('company_token');
         $this->live_default_service_type  = $this->get_option('default_service_type');
         $this->successful_status          = $this->get_option('successful_status');
-        $this->live_url                   = $dpo_url == '' ? $this->live_url : $dpo_url;
-        $this->live_pay_url               = $pay_url == '' ? $this->live_pay_url : $pay_url;
         $this->ptl_type                   = $this->get_option('ptl_type');
         $this->ptl                        = $this->get_option('ptl');
         $this->image_url                  = $this->get_option('image_url');
         $this->order_meta_service         = $this->get_option('order_meta_service');
         $this->order_meta_company_acc_ref = $this->get_option('order_meta_company_acc_ref');
-        $this->test_mode                  = $this->get_option('test_mode');
-
-        if ($this->test_mode == 'yes') {
-            $this->company_token        = $this->test_company_token;
-            $this->default_service_type = $this->test_default_service_type;
-            $this->url                  = $this->test_url;
-            $this->dpo_api_url          = $this->url;
-            $this->pay_url              = $this->test_pay_url;
-        } else {
-            $this->company_token        = $this->live_company_token;
-            $this->default_service_type = $this->live_default_service_type;
-            $this->url                  = $this->live_url;
-            // Add backwards compatibility with previous url structure
-            if ($this->url == 'https://secure.3gdirectpay.com') {
-                $this->url .= '/API/v6/';
-            }
-            $this->dpo_api_url = $this->url;
-            $this->pay_url     = $this->live_pay_url;
-            // Add backwards compatibility with previous url structure
-            if ($this->pay_url == 'pay.php' || $this->pay_url == 'payv2.php') {
-                $this->pay_url = 'https://secure.3gdirectpay.com/' . $this->pay_url;
-            }
-        }
 
         // Load the settings
         $settings = get_option('woocommerce_woocommerce_dpo_settings', false);
@@ -177,17 +138,15 @@ class WCGatewayDPO extends WC_Payment_Gateway
         if (strstr($pushData, '<API3G>') !== false) {
             $data = new SimpleXMLElement($pushData);
 
-            if ($data->xpath('TransactionToken')[0]->__toString() !== '' && $data->xpath(
-                    'TransactionRef'
-                )[0]->__toString()) {
+            if ($data->TransactionToken !== '' && $data->CompanyRef) {
                 // Return OK to DPO
                 echo 'OK';
 
                 // Get the transaction information
-                $order_id          = $data->xpath('TransactionRef')[0]->__toString();
-                $transactionToken  = $data->xpath('TransactionToken')[0]->__toString();
-                $result            = $data->xpath('Result')[0]->__toString();
-                $resultExplanation = $data->xpath('ResultExplanation')[0]->__toString();
+                $order_id          = $data->CompanyRef;
+                $transactionToken  = $data->TransactionToken;
+                $result            = $data->Result;
+                $resultExplanation = $data->ResultExplanation;
 
                 $order      = wc_get_order($order_id);
                 $order_paid = $order ? $order->is_paid() : false;
@@ -407,14 +366,6 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 'placeholder' => __('For Example: 29161', 'woocommerce'),
                 'desc_tip'    => true,
             ),
-            'test_mode'                  => array(
-                'title'       => __('Enable Test Mode', 'woocommerce'),
-                'label'       => __('Enable Test Mode', 'woocommerce'),
-                'type'        => 'checkbox',
-                'description' => __('Uses test accounts if enabled. No real transactions processed', 'paygatedpo'),
-                'desc_tip'    => true,
-                'default'     => 'no',
-            ),
             'logging'                    => array(
                 'title'       => __('Enable Logging', 'woocommerce'),
                 'label'       => __('Enable Logging', 'woocommerce'),
@@ -422,24 +373,6 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 'description' => __('Enable WooCommerce Logging', 'woocommerce'),
                 'desc_tip'    => true,
                 'default'     => 'no',
-            ),
-            'dpo_url'                    => array(
-                'title'       => __('DPO Pay API URL', 'woocommerce'),
-                'type'        => 'text',
-                'description' => __('The default is ', 'woocommerce') . $this->dpo_api_url . __(
-                        '. You should not have to change this',
-                        'woocommerce'
-                    ),
-                'default'     => $this->dpo_api_url,
-            ),
-            'pay_url'                    => array(
-                'title'       => __('DPO Pay URL', 'woocommerce'),
-                'type'        => 'text',
-                'description' => __(
-                    'The default is https://secure.3gdirectpay.com/payv2.php. You should not have to change this',
-                    'woocommerce'
-                ),
-                'default'     => 'https://secure.3gdirectpay.com/payv2.php',
             ),
             'ptl_type'                   => array(
                 'title'       => __('PTL Type ( Optional )', 'woocommerce'),
@@ -509,7 +442,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 'default'     => '',
                 'options'     => $this->getPaymentIcons(),
             ],
-            'order_filter'                    => array(
+            'order_filter'               => array(
                 'title'       => __("DPO Pay order filter", 'woocommerce'),
                 'label'       => __("Enable 'dpo_pay_order_create' filter (use with caution)", 'woocommerce'),
                 'type'        => 'checkbox',
@@ -562,7 +495,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
 
         $response = $this->before_payment($order_id);
 
-        if ($response === false) {
+        if ($response['success'] === false) {
             //show error message
             wc_add_notice(
                 __(
@@ -587,15 +520,12 @@ class WCGatewayDPO extends WC_Payment_Gateway
 
     public function updatePostMeta($response, $order_id)
     {
-        if (@simplexml_load_string($response)) {
-            // Convert the XML result into array
-            $xml = new SimpleXMLElement($response);
-
-            if ($xml->Result[0] != '000') {
+        if (!empty($response)) {
+            if ($response['result'] != '000') {
                 // Show error message
                 wc_add_notice(
                     __(
-                        'Payment error code: ' . $xml->Result[0] . ', ' . $xml->ResultExplanation[0],
+                        'Payment error code: ' . $response['success'] . ', ' . $response['error'],
                         'woothemes'
                     ),
                     'error'
@@ -608,22 +538,18 @@ class WCGatewayDPO extends WC_Payment_Gateway
             }
 
             //Add Transaction ID
-            $transRef = $xml->TransRef[0]->__toString();
+            $transRef = $response['transRef'];
             $order    = new WC_Order($order_id);
             $order->set_transaction_id($transRef);
             $order->save();
 
             // Add record to order - will appear as custom field in admin
             update_post_meta($order_id, 'dpo_reference', $transRef);
-            update_post_meta($order_id, 'dpo_trans_token', $xml->TransToken[0]->__toString());
+            update_post_meta($order_id, 'dpo_trans_token', $response['transToken']);
 
             // Create DPO Pay gateway payment URL
-
-            if ($this->pay_url == 'https://payment.dpo.co.tz/') {
-                $paymentURL = $this->pay_url . "?token=" . $xml->TransToken[0];
-            } else {
-                $paymentURL = $this->pay_url . "?ID=" . $xml->TransToken[0];
-            }
+            $dpo        = new Dpo(false);
+            $paymentURL = $dpo->getPayUrl() . "?ID=" . $response['transToken'];
 
             $responseData = array(
                 'redirect' => $paymentURL,
@@ -659,79 +585,8 @@ class WCGatewayDPO extends WC_Payment_Gateway
 
         $order = new WC_Order($order_id);
 
-        // Non-numeric values not allowed by DPO
-        $phone = preg_replace(['/\+/', '/[^0-9]+/'], ['00', ''], $order->get_billing_phone());
-
-        $param = array(
-            'order_id'   => $order_id,
-            'amount'     => '<PaymentAmount>' . $order->get_total() . '</PaymentAmount>',
-            'first_name' => '<customerFirstName>' . $order->get_billing_first_name() . '</customerFirstName>',
-            'last_name'  => '<customerLastName>' . $order->get_billing_last_name() . '</customerLastName>',
-            'phone'      => '<customerPhone>' . $phone . '</customerPhone>',
-            'email'      => '<customerEmail>' . $order->get_billing_email() . '</customerEmail>',
-            'address'    => '<customerAddress>' . $order->get_billing_address_1() . '</customerAddress>',
-            'city'       => '<customerCity>' . $order->get_billing_city() . '</customerCity>',
-            'zipcode'    => '<customerZip>' . $order->get_billing_postcode() . '</customerZip>',
-            'country'    => '<customerCountry>' . $order->get_billing_country() . '</customerCountry>',
-            'dialcode'   => '<customerDialCode>' . $order->get_billing_country() . '</customerDialCode>',
-            'ptl_type'   => ($this->ptl_type == 'minutes') ? '<PTLtype>minutes</PTLtype>' : "",
-            'ptl'        => (!empty($this->ptl)) ? '<PTL>' . $this->ptl . '</PTL>' : "",
-            'currency'   => $this->check_woocommerce_currency($order->get_currency()),
-        );
-
-        self::$logging ? self::$logger->add('dpo_order', 'Params: ' . json_encode($param)) : '';
-
-        // Save payment parameters to session
-        $woocommerce->session->paymentToken = $param;
-
-        // Create xml and send request return response
-        return $this->create_send_xml_request($param, $order, $order_id);
-    }
-
-    public function check_woocommerce_currency($currency)
-    {
-        // Check if CFA
-        if ($currency === 'CFA') {
-            $currency = 'XOF';
-        }
-        if ($currency === 'MK') {
-            $currency = 'MWK';
-        }
-
-        return $currency;
-    }
-
-    /**
-     * Called by before_payment
-     * Completes xml creation
-     * Calls create_send_xml_request with xml as input
-     *
-     * @param $param
-     * @param $order
-     * @param $order_id
-     *
-     * @return bool|string
-     */
-    public function create_send_xml_request($param, $order, $order_id)
-    {
-        // URL for DPO Pay to send the buyer to after review and continue from DPO Pay.
-        $returnURL = $this->get_return_url($order);
-
-        // URL for DPO Pay to send the buyer to if they cancel the payment.
-        $cancelURL = esc_url($order->get_cancel_order_url());
-
         // Get all products in the cart retrieve service type and description of the product
         $service = '';
-
-        // Get an instance of the WC_Order object
-        $order = wc_get_order($order_id);
-
-        // Load the settings
-        $settings = get_option('woocommerce_woocommerce_dpo_settings', false);
-
-        if ($settings['order_filter'] === "yes") {
-            $order = apply_filters('dpo_pay_order_create', $order);
-        }
 
         // The loop to get the order items which are WC_Order_Item_Product objects since WC 3+
         foreach ($order->get_items() as $item) {
@@ -744,7 +599,9 @@ class WCGatewayDPO extends WC_Payment_Gateway
             // Get product details
             $single_product = wc_get_product($product_id);
 
-            $serviceType = !empty($product_data["service_type"][0]) ? $product_data["service_type"][0] : $this->default_service_type;
+            $serviceType = !empty($product_data["service_type"][0]) ? $product_data["service_type"][0] : $this->get_option(
+                'default_service_type'
+            );
             $serviceDesc = str_replace('&', 'and', $single_product->post->post_title);
 
             // Replace html with underscores as it is not allowed in XML
@@ -757,7 +614,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                             <ServiceDate>' . current_time('Y/m/d H:i') . '</ServiceDate>
                         </Service>';
         }
-        // Check order_meta_service and add to services if applicable
+
         $order_fields = explode('|', $this->order_meta_service); // Split order_meta_service into array
 
         self::doLogging('Order fields: ' . json_encode($order_fields));
@@ -792,10 +649,10 @@ class WCGatewayDPO extends WC_Payment_Gateway
             }
         }
 
-        // Check order_meta_company_acc_ref and add to companyAccRef if applicable
-        $companyAccRef = $this->order_meta_company_acc_ref;
+        // Non-numeric values not allowed by DPO
+        $phone = preg_replace(['/\+/', '/[^0-9]+/'], ['00', ''], $order->get_billing_phone());
 
-        self::doLogging('$companyAccRef: ' . $companyAccRef);
+        $companyAccRef = $this->order_meta_company_acc_ref;
 
         if ($companyAccRef != "") {
             $order_fields_array = explode(',', $companyAccRef); // Split order_field_meta into array if applicable
@@ -813,94 +670,59 @@ class WCGatewayDPO extends WC_Payment_Gateway
             } else {
                 $companyAccRef = $order->get_meta($companyAccRef, true);
             }
-            $companyAccRef = '<CompanyAccRef>' . $companyAccRef . '</CompanyAccRef>';
         }
 
-        $input_xml = '<?xml version="1.0" encoding="utf-8"?>
-                <API3G>
-                    <CompanyToken>' . $this->company_token . '</CompanyToken>
-                    <Request>createToken</Request>
-                    <Transaction>' . $param["first_name"] .
-                     $param["last_name"] .
-                     $param["phone"] .
-                     $param["email"] .
-                     $param["address"] .
-                     $param["city"] .
-                     $param["zipcode"] .
-                     $param["country"] .
-                     $param["dialcode"] .
-                     $companyAccRef .
-                     $param["amount"] . '
-                        <PaymentCurrency>' . $param["currency"] . '</PaymentCurrency>
-                        <CompanyRef>' . $param["order_id"] . '</CompanyRef>
-                        <RedirectURL>' . $returnURL . '</RedirectURL>
-                        <BackURL>' . $cancelURL . '</BackURL>
-                        <CompanyRefUnique>0</CompanyRefUnique>
-                        ' . $param["ptl_type"] .
-                     $param["ptl"] . '
-                        <TransactionSource>woocommerce</TransactionSource>
-                    </Transaction>
-                    <Services>' . $service . '</Services>
-                </API3G>';
+        $param = array(
+            'serviceType'       => $service !== '' ? $service : $this->get_option('default_service_type'),
+            'companyToken'      => $this->get_option('company_token'),
+            'companyRef'        => $order_id,
+            'redirectURL'       => $this->get_return_url($order),
+            'backURL'           => esc_url($order->get_cancel_order_url()),
+            'paymentAmount'     => $order->get_total(),
+            'customerFirstName' => $order->get_billing_first_name(),
+            'customerLastName'  => $order->get_billing_last_name(),
+            'customerPhone'     => $phone,
+            'customerEmail'     => $order->get_billing_email(),
+            'customerAddress'   => $order->get_billing_address_1(),
+            'customerCity'      => $order->get_billing_city(),
+            'customerZip'       => $order->get_billing_postcode(),
+            'customerCountry'   => $order->get_billing_country(),
+            'customerDialCode'  => $order->get_billing_country(),
+            'ptl_type'          => ($this->ptl_type == 'minutes') ?: "",
+            'ptl'               => (!empty($this->ptl)) ? $this->ptl : "",
+            'paymentCurrency'   => $this->check_woocommerce_currency($order->get_currency()),
+            'companyAccRef'     => $companyAccRef,
+        );
 
-        self::doLogging('Input XML: ' . $input_xml);
+        self::$logging ? self::$logger->add('dpo_order', 'Params: ' . json_encode($param)) : '';
 
-        // Hook action for DPO Card stores
-        $service_class      = new stdClass();
-        $service_class->xml = $input_xml;
-        do_action('dpocard_solution_set_service', $service_class);
+        // Load the settings
+        $settings = get_option('woocommerce_woocommerce_dpo_settings', false);
 
-        self::doLogging('Service Class: ' . json_encode($service_class));
+        if ($settings['order_filter'] === "yes") {
+            $order = apply_filters('dpo_pay_order_create', $order);
+        }
 
-        return $this->createCURL($service_class->xml);
+        // Save payment parameters to session
+        $woocommerce->session->paymentToken = $param;
+
+        // Create xml and send request return response
+        $dpo = new Dpo(false);
+
+        return $dpo->createToken($param);
     }
 
-    /**
-     * Called by create_send_xml_request and verify_token
-     * Makes actual curl request and returns response
-     *
-     * @param $input_xml
-     *
-     * @return bool|string
-     */
-    public function createCURL($input_xml, $is_verify = false)
+    public function check_woocommerce_currency($currency)
     {
-        self::$logging ? self::$logger->add('dpo_order', 'createCurl: ' . $input_xml) : '';
-        self::$logging ? self::$logger->add('dpo_order', 'dpo_api_url: ' . $this->dpo_api_url) : '';
-        self::$logging ? self::$logger->add('dpo_order', 'this_url: ' . $this->url) : '';
-
-        $whitelist = array(
-            $this->dpo_api_url,
-        );
-
-        $args = array(
-            'method'      => 'POST',
-            'timeout'     => 45,
-            'redirection' => 5,
-            'httpversion' => '1.0',
-            'headers'     => array(
-                'Content-Type' => 'text/xml'
-            ),
-            'body'        => $input_xml,
-            'sslverify'   => false
-        );
-
-        if (in_array($this->url, $whitelist)) {
-            $api_url = $is_verify ? 'https://secure.3gdirectpay.com/API/v7/' : $this->url;
-            $wp_remote_post = wp_remote_post($api_url, $args);
-            $response       = wp_remote_retrieve_body($wp_remote_post);
-            self::$logging ? self::$logger->add('dpo_order', 'Response: ' . $response) : '';
-
-
-            if (is_wp_error($wp_remote_post)) {
-                $error = $wp_remote_post->get_error_message();
-                self::$logging ? self::$logger->add('dpo_order', 'Error: ' . $error) : '';
-
-                return $error;
-            }
-
-            return $response;
+        // Check if CFA
+        if ($currency === 'CFA') {
+            $currency = 'XOF';
         }
+        if ($currency === 'MK') {
+            $currency = 'MWK';
+        }
+
+        return $currency;
     }
 
     /**
@@ -928,12 +750,19 @@ class WCGatewayDPO extends WC_Payment_Gateway
             }
         }
         // Get verify token response from DPO Pay
-        $response = $this->verifytoken($transactionToken);
+        $dpo = new Dpo(false);
 
-        if ($response) {
+        $response = $dpo->verifyToken(
+            [
+                'companyToken' => $this->get_option('company_token'),
+                'transToken'   => $transactionToken,
+            ]
+        );
+
+        if (!empty($response)) {
             // Check selected order status workflow
-            if ($response->Result[0] == '000' && $order->get_id() == (int)$response->CompanyRef->__toString()) {
-
+            $response = new SimpleXMLElement($response);
+            if ($response->Result == '000' && $order->get_id() == (int)$response->CompanyRef) {
                 switch ($this->successful_status) {
                     case 'on-hold':
                         $order->update_status(
@@ -966,21 +795,21 @@ class WCGatewayDPO extends WC_Payment_Gateway
                         do_action('dpo_template_redirect');
                         break;
                     default:
-                            $order->update_status(
-                                'processing',
-                                __(self::ORDER_APPROVAL_MSG, 'woocommerce')
-                            );
-                            $order->add_order_note(self::ORDER_APPROVAL_MSG);
-                            $order->add_order_note(
-                                'Customer Credit Type: ' . $response->CustomerCreditType->__toString()
-                            );
-                            update_post_meta(
-                                $order_id,
-                                'customer_credit_type',
-                                $response->CustomerCreditType->__toString()
-                            );
-                            $order->payment_complete();
-                            do_action('dpo_template_redirect');
+                        $order->update_status(
+                            'processing',
+                            __(self::ORDER_APPROVAL_MSG, 'woocommerce')
+                        );
+                        $order->add_order_note(self::ORDER_APPROVAL_MSG);
+                        $order->add_order_note(
+                            'Customer Credit Type: ' . $response->CustomerCreditType->__toString()
+                        );
+                        update_post_meta(
+                            $order_id,
+                            'customer_credit_type',
+                            $response->CustomerCreditType->__toString()
+                        );
+                        $order->payment_complete();
+                        do_action('dpo_template_redirect');
 
                         break;
                 }
@@ -1033,33 +862,6 @@ class WCGatewayDPO extends WC_Payment_Gateway
         } elseif ($order->get_status() == $this->successful_status) {
             $order->payment_complete();
         }
-    }
-
-    /**
-     * Called from check_dpo_response and by cron task
-     * Makes verifyToken request to DPO API
-     *
-     * @param $transactionToken
-     *
-     * @return false|SimpleXMLElement
-     */
-    public function verifytoken($transactionToken)
-    {
-        $input_xml = '<?xml version="1.0" encoding="utf-8"?>
-                    <API3G>
-                      <CompanyToken>' . $this->company_token . '</CompanyToken>
-                      <Request>verifyToken</Request>
-                      <TransactionToken>' . $transactionToken . '</TransactionToken>
-                    </API3G>';
-
-        $response = $this->createCURL($input_xml, true);
-
-        if ($response !== false && substr($response, 0, 5) === '<?xml') {
-            // Convert the XML result into array
-            return new SimpleXMLElement($response);
-        }
-
-        return false;
     }
 
     /**
