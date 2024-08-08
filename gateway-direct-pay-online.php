@@ -5,10 +5,10 @@
  * Description: Receive payments using the African DPO Pay payments provider.
  * Author: DPO Group
  * Author URI: https://www.dpogroup.com/
- * Version: 1.1.5
+ * Version: 1.1.6
  * Requires at least: 5.6
- * Tested up to: 6.5.3
- * WC tested up to: 8.9.1
+ * Tested up to: 6.6.1
+ * WC tested up to: 9.1.4
  * WC requires at least: 6.0
  * Requires PHP: 8.0
  *
@@ -20,6 +20,8 @@
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: dpo-group-for-woocommerce
  */
+
+use Automattic\WooCommerce\Utilities\FeaturesUtil;
 
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
@@ -45,8 +47,12 @@ if (!is_plugin_active('woocommerce/woocommerce.php')) {
 add_action('plugins_loaded', 'gdpo_woocommerce_dpo_init');
 register_deactivation_hook(__FILE__, 'gdpo_delete_dbo_custom_order_table');
 
-// Main DPO Pay plugin function
-function gdpo_woocommerce_dpo_init()
+/**
+ * Main DPO Pay plugin function
+ *
+ * @return void
+ */
+function gdpo_woocommerce_dpo_init(): void
 {
     // Check if woocommerce  installed
     if (!class_exists('WC_Payment_Gateway')) {
@@ -55,8 +61,19 @@ function gdpo_woocommerce_dpo_init()
 
     require_once plugin_basename('classes/dpo.class.php');
 
-    // Add the Gateway to WooCommerce
-    function gdpo_woocommerce_add_gateway_dpo($methods)
+    /**
+     * Add the Gateway to WooCommerce
+     *
+     * @param $methods
+     *
+     * @return mixed
+     */
+    /**
+     * @param $methods
+     *
+     * @return mixed
+     */
+    function gdpo_woocommerce_add_gateway_dpo($methods): mixed
     {
         $methods[] = 'WCGatewayDPO';
 
@@ -86,9 +103,13 @@ function gdpo_woocommerce_dpo_init()
     }
 }
 
-function gdpo_delete_dbo_custom_order_table()
+/**
+ * Delete custom table for DPO order data
+ *
+ * @return void
+ */
+function gdpo_delete_dbo_custom_order_table(): void
 {
-    // Delete custom table for DPO order data
     global $wpdb;
     $dpo_table_name = $wpdb->prefix . 'dpo_order_data';
     $sql            = "drop table if exists $dpo_table_name";
@@ -96,8 +117,12 @@ function gdpo_delete_dbo_custom_order_table()
     $wpdb->query($sql);
 }
 
-// Adding custom tabs (Service_type) to woocommerce product data settingds
-function gdpo_custom_tab_options_tab()
+/**
+ * Adding custom tabs (Service_type) to woocommerce product data settingds
+ *
+ * @return void
+ */
+function gdpo_custom_tab_options_tab(): void
 {
     global $woothemes;
     ?>
@@ -110,16 +135,21 @@ function gdpo_custom_tab_options_tab()
 
 add_action('woocommerce_product_write_panel_tabs', 'gdpo_custom_tab_options_tab');
 
-function gdpo_custom_tab_options()
+/**
+ * Renders the tab options
+ *
+ * @return void
+ */
+function gdpo_custom_tab_options(): void
 {
     global $post;
     global $woothemes;
 
-    $gdpo_custom_tab_options = array(
+    $gdpo_custom_tab_options = [
         'service_type' => get_post_meta($post->ID, 'service_type', true),
-    );
+    ];
 
-    $service_type = @$gdpo_custom_tab_options['service_type'];
+    $service_type = $gdpo_custom_tab_options['service_type'];
 
     ?>
     <div id="dpo_service_tab_data" class="panel woocommerce_options_panel">
@@ -145,7 +175,7 @@ add_action('woocommerce_product_data_panels', 'gdpo_custom_tab_options');
  *
  * Processes the custom tab options when a post is saved
  */
-function gdpo_process_product_meta_custom_tab($post_id)
+function gdpo_process_product_meta_custom_tab($post_id): void
 {
     $service_type = sanitize_text_field($_POST['service_type']);
     update_post_meta($post_id, 'service_type', $service_type);
@@ -163,21 +193,21 @@ class WC_Dpo_Payments
     /**
      * Plugin bootstrapping.
      */
-    public static function init()
+    public static function init(): void
     {
         // Registers WooCommerce Blocks integration.
         add_action(
             'woocommerce_blocks_loaded',
-            array(__CLASS__, 'woocommerce_gateway_dpo_woocommerce_block_support')
+            [__CLASS__, 'woocommerce_gateway_dpo_woocommerce_block_support']
         );
     }
 
     /**
      * Add the Dpo Payment gateway to the list of available gateways.
      *
-     * @param array
+     * @param array $gateways
      */
-    public static function add_gateway($gateways)
+    public static function add_gateway(array $gateways): array
     {
         $gateways[] = 'WC_Gateway_Dpo';
 
@@ -185,22 +215,11 @@ class WC_Dpo_Payments
     }
 
     /**
-     * Plugin includes.
-     */
-    public static function includes()
-    {
-        // Make the WC_Gateway_Dpo class available.
-        if (class_exists('WC_Payment_Gateway')) {
-            require_once 'classes/WC_Gateway_Dpo.php';
-        }
-    }
-
-    /**
      * Plugin url.
      *
      * @return string
      */
-    public static function plugin_url()
+    public static function plugin_url(): string
     {
         return untrailingslashit(plugins_url('/', __FILE__));
     }
@@ -210,7 +229,7 @@ class WC_Dpo_Payments
      *
      * @return string
      */
-    public static function plugin_abspath()
+    public static function plugin_abspath(): string
     {
         return trailingslashit(plugin_dir_path(__FILE__));
     }
@@ -219,7 +238,7 @@ class WC_Dpo_Payments
      * Registers WooCommerce Blocks integration.
      *
      */
-    public static function woocommerce_gateway_dpo_woocommerce_block_support()
+    public static function woocommerce_gateway_dpo_woocommerce_block_support(): void
     {
         if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
             require_once plugin_dir_path(__FILE__) . 'includes/blocks/class-wc-dpo-payments-blocks.php';
@@ -238,10 +257,10 @@ class WC_Dpo_Payments
  *
  * @return void
  */
-function woocommerce_direct_pay_online_declare_hpos_compatibility()
+function woocommerce_direct_pay_online_declare_hpos_compatibility(): void
 {
     if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
-        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
+        FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__);
     }
 }
 
