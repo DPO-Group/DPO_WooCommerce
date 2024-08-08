@@ -7,15 +7,26 @@
  * Released under the GNU General Public License
  */
 
+/**
+ * DPO cron class
+ *
+ */
 class WCGatewayDpoCron extends WCGatewayDPO
 {
-    const LOGGING            = 'logging';
-    const TXN_MSG            = "The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. ";
-    const ORDER_APPROVED     = "The transaction paid successfully and order approved.";
-    const ORDER_APPROVAL_MSG = "The transaction paid successfully and waiting for approval.";
-    const PAYMENT_FAILED     = "Payment Failed: DPO payment failed or was cancelled. Notice that the stock is NOT reduced. ";
+    public const LOGGING            = 'logging';
+    public const TXN_MSG            = 'The transaction paid successfully and waiting for approval. Notice that the stock will NOT reduced automaticlly. ';
+    public const ORDER_APPROVED     = 'The transaction paid successfully and order approved.';
+    public const ORDER_APPROVAL_MSG = 'The transaction paid successfully and waiting for approval.';
+    public const PAYMENT_FAILED     = 'Payment Failed: DPO payment failed or was cancelled. Notice that the stock is NOT reduced. ';
 
-    public static function logData($orders)
+    /**
+     * Logs to the WC log
+     *
+     * @param $orders
+     *
+     * @return void
+     */
+    public static function logData($orders): void
     {
         $logging = false;
 
@@ -27,15 +38,17 @@ class WCGatewayDpoCron extends WCGatewayDPO
         }
 
         $logger = wc_get_logger();
-        $logging ? $logger->add('dpo_cron', 'Starting DPO cron job') : '';
 
-        $logging ? $logger->add('dpo_cron', 'Orders: ' . json_encode($orders)) : '';
+        if ($logging) {
+            $logger->add('dpo_cron', 'Starting DPO cron job');
+            $logger->add('dpo_cron', 'Orders: ' . json_encode($orders));
+        }
     }
 
     /**
      * Run regularly to update orders
      */
-    public static function dpo_order_query_cron()
+    public static function dpo_order_query_cron(): void
     {
         $dpo = new WCGatewayDPO();
 
@@ -46,7 +59,7 @@ class WCGatewayDpoCron extends WCGatewayDPO
         foreach ($orders as $order) {
             $order_id         = $order->ID;
             $order            = wc_get_order($order_id);
-            $transactionToken = $order->get_meta('dpo_trans_token', true);
+            $transactionToken = $order->get_meta('dpo_trans_token');
             // Query DPO for status
             $order = wc_get_order($order_id);
 
@@ -110,7 +123,16 @@ class WCGatewayDpoCron extends WCGatewayDPO
         }
     }
 
-    public static function updateOrderStatusCron($response, $order, $dpo)
+    /**
+     * Updated the order status
+     *
+     * @param $response
+     * @param $order
+     * @param $dpo
+     *
+     * @return void
+     */
+    public static function updateOrderStatusCron($response, $order, $dpo): void
     {
         $error_code = $response->Result[0];
         $error_desc = $response->ResultExplanation[0];
@@ -124,7 +146,14 @@ class WCGatewayDpoCron extends WCGatewayDPO
         }
     }
 
-    public static function dpo_add_order_meta_box_action($actions)
+    /**
+     * Adds order meta box action
+     *
+     * @param $actions
+     *
+     * @return mixed
+     */
+    public static function dpo_add_order_meta_box_action($actions): mixed
     {
         global $theorder;
 
@@ -136,7 +165,12 @@ class WCGatewayDpoCron extends WCGatewayDPO
         return $actions;
     }
 
-    protected static function dpo_order_query_cron_query()
+    /**
+     * Queries the post table for the order
+     *
+     * @return array|object|stdClass[]|null
+     */
+    protected static function dpo_order_query_cron_query(): array|object|null
     {
         global $wpdb;
 

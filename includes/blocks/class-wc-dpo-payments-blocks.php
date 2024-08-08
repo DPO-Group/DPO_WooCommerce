@@ -20,12 +20,12 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType
      *
      * @var WCGatewayDPO
      */
-    private $gateway;
+    private WCGatewayDPO $gateway;
 
     /**
      * Initializes the payment method type.
      */
-    public function initialize()
+    public function initialize(): void
     {
         $this->settings = get_option('woocommerce_dpo_settings', []);
         $this->gateway  = new WCGatewayDPO();
@@ -34,10 +34,15 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType
     /**
      * Returns if this payment method should be active. If false, the scripts will not be enqueued.
      *
-     * @return boolean
+     * @return bool
      */
-    public function is_active()
+    public function is_active(): bool
     {
+        // Call the parent class's is_active method if it exists
+        if (method_exists(get_parent_class($this), 'is_active')) {
+            parent::is_active();
+        }
+
         return $this->gateway->is_available();
     }
 
@@ -46,16 +51,19 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType
      *
      * @return array
      */
-    public function get_payment_method_script_handles()
+    public function get_payment_method_script_handles(): array
     {
+        // Call the parent method if it exists
+        $parent_handles = parent::get_payment_method_script_handles();
+
         $script_path       = '/assets/js/frontend/blocks.js';
         $script_asset_path = WC_Dpo_Payments::plugin_abspath() . 'assets/js/frontend/blocks.asset.php';
         $script_asset      = file_exists($script_asset_path)
             ? require($script_asset_path)
-            : array(
-                'dependencies' => array(),
+            : [
+                'dependencies' => [],
                 'version'      => '1.2.0'
-            );
+            ];
         $script_url        = WC_Dpo_Payments::plugin_url() . $script_path;
 
         wp_register_script(
@@ -74,7 +82,8 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType
             );
         }
 
-        return ['wc-dpo-payments-blocks'];
+        // Return a merged array of parent handles and the new script handle
+        return array_merge($parent_handles, ['wc-dpo-payments-blocks']);
     }
 
     /**
@@ -82,21 +91,27 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType
      *
      * @return array
      */
-    public function get_payment_method_data()
+    public function get_payment_method_data(): array
     {
-        return [
+        // Call the parent method and get its data
+        $parent_data = parent::get_payment_method_data();
+
+        $child_data = [
             'title'       => $this->gateway->get_option('title') != null ? $this->gateway->get_option(
                 'title'
             ) : $this->get_setting('title'),
-            'description' => $this->gateway->get_option('description') != "" ? $this->gateway->get_option(
+            'description' => $this->gateway->get_option('description') != '' ? $this->gateway->get_option(
                 'description'
             ) : $this->get_setting('description'),
-            'button_text' => $this->gateway->get_option('button_text') != "" ? $this->gateway->get_option(
+            'button_text' => $this->gateway->get_option('button_text') != '' ? $this->gateway->get_option(
                 'button_text'
-            ) : "Pay Now",
+            ) : 'Pay Now',
             'icons'       => $this->gateway->get_block_icon(),
-            'pluginurl'   => trailingslashit(plugins_url(null, dirname(__FILE__))) . "../assets/images/",
+            'pluginurl'   => trailingslashit(plugins_url(null, dirname(__FILE__))) . '../assets/images/',
             'supports'    => array_filter($this->gateway->supports, [$this->gateway, 'supports'])
         ];
+
+        // Merge parent data with child data
+        return array_merge($parent_data, $child_data);
     }
 }

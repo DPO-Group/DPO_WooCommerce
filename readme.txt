@@ -2,9 +2,9 @@
 Contributors: appinlet
 Tags: ecommerce, e-commerce, woocommerce, automattic, payment, dpo, dpo pay, dpo group, app inlet, credit card, payment request
 Requires at least: 6.2
-Tested up to: 6.4
+Tested up to: 6.6
 Requires PHP: 8.0
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -43,6 +43,11 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
 4. WooCommerce Admin Product Page Settings
 
 == Changelog ==
+= 1.1.6 - 2024-08-08 =
+ * PHP 8.2 code quality standards
+ * Bug fixes and improvements
+ * Tested on WooCommerce 9.1.4, PHP 8.2 and WordPress 6.6.1.
+
 = 1.1.5 - 2024-05-28 =
  * Tested on WooCommerce 8.9.1, PHP 8.1 and WordPress 6.5.3.
 
