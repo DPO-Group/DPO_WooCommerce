@@ -65,16 +65,8 @@ class WCGatewayDpoCron extends WCGatewayDPO
 
             if ($transactionToken == '') {
                 // Cancelled before DPO payment tried
-                $order->update_status(
-                    'failed',
-                    __(
-                        self::PAYMENT_FAILED,
-                        'woocommerce'
-                    )
-                );
-                $order->add_order_note(
-                    self::PAYMENT_FAILED
-                );
+                $order->update_status('failed', __(self::PAYMENT_FAILED, 'woocommerce'));
+                $order->add_order_note(self::PAYMENT_FAILED);
                 $order->save();
                 continue;
             }
@@ -83,39 +75,33 @@ class WCGatewayDpoCron extends WCGatewayDPO
 
             if ($response) {
                 // Check selected order status workflow
-                if ($response->Result[0] == '000') {
-                    if ($order->get_status() !== $dpo->successful_status) {
-                        switch ($dpo->successful_status) {
-                            case 'on-hold':
-                                $order->update_status(
-                                    'on-hold',
-                                    __(
-                                        self::TXN_MSG,
-                                        'woocommerce'
-                                    )
-                                );
-                                $order->add_order_note(
-                                    self::TXN_MSG
-                                );
-                                break;
-                            case 'completed':
-                                $order->update_status(
-                                    'completed',
-                                    __(self::ORDER_APPROVED, 'woocommerce')
-                                );
-                                $order->add_order_note(self::ORDER_APPROVED);
-                                $order->payment_complete();
-                                break;
-                            default:
-                                $order->update_status(
-                                    'processing',
-                                    __(self::ORDER_APPROVAL_MSG, 'woocommerce')
-                                );
-                                $order->add_order_note(self::ORDER_APPROVAL_MSG);
-                                $order->payment_complete();
-                                break;
-                        }
+                if ($response->Result[0] === '000' && $order->get_status() !== $dpo->successfulStatus) {
+                    $statusMessage = '';
+                    $orderNote     = '';
+
+                    switch ($dpo->successfulStatus) {
+                        case 'on-hold':
+                            $statusMessage = __(self::TXN_MSG, 'woocommerce');
+                            $order->update_status('on-hold', $statusMessage);
+                            $orderNote = self::TXN_MSG;
+                            break;
+
+                        case 'completed':
+                            $statusMessage = __(self::ORDER_APPROVED, 'woocommerce');
+                            $order->update_status('completed', $statusMessage);
+                            $order->payment_complete();
+                            $orderNote = self::ORDER_APPROVED;
+                            break;
+
+                        default:
+                            $statusMessage = __(self::ORDER_APPROVAL_MSG, 'woocommerce');
+                            $order->update_status('processing', $statusMessage);
+                            $order->payment_complete();
+                            $orderNote = self::ORDER_APPROVAL_MSG;
+                            break;
                     }
+
+                    $order->add_order_note($orderNote);
                 } else {
                     self::updateOrderStatusCron($response, $order, $dpo);
                 }

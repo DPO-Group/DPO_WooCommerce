@@ -1,4 +1,8 @@
 *** DPO Pay for WooCommerce Changelog ***
+= 1.2.0 2024-12-19 =
+ * Code quality improvements.
+ * Tested on WooCommerce 9.4.3 and WordPress 6.7.1.
+
 = 1.1.6 - 2024-08-08 =
  * PHP 8.2 code quality standards
  * Bug fixes and improvements
