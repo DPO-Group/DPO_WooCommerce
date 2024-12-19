@@ -59,7 +59,7 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType
         $script_path       = '/assets/js/frontend/blocks.js';
         $script_asset_path = WC_Dpo_Payments::plugin_abspath() . 'assets/js/frontend/blocks.asset.php';
         $script_asset      = file_exists($script_asset_path)
-            ? require($script_asset_path)
+            ? require $script_asset_path
             : [
                 'dependencies' => [],
                 'version'      => '1.2.0'
@@ -108,7 +108,8 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType
             ) : 'Pay Now',
             'icons'       => $this->gateway->get_block_icon(),
             'pluginurl'   => trailingslashit(plugins_url(null, dirname(__FILE__))) . '../assets/images/',
-            'supports'    => array_filter($this->gateway->supports, [$this->gateway, 'supports'])
+            'supports'    => array_filter($this->gateway->supports, [$this->gateway, 'supports']),
+            'logo_url'    => WC_Dpo_Payments::plugin_url() . '/assets/images/dpo-pay.svg',
         ];
 
         // Merge parent data with child data

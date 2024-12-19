@@ -5,10 +5,10 @@
  * Description: Receive payments using the African DPO Pay payments provider.
  * Author: DPO Group
  * Author URI: https://www.dpogroup.com/
- * Version: 1.1.6
- * Requires at least: 5.6
+ * Version: 1.2.0
+ * Requires at least: 6.2
  * Tested up to: 6.6.1
- * WC tested up to: 9.1.4
+ * WC tested up to: 9.4.3
  * WC requires at least: 6.0
  * Requires PHP: 8.0
  *
