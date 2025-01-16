@@ -1,4 +1,7 @@
 *** DPO Pay for WooCommerce Changelog ***
+= 1.2.1 2025-01-16 =
+ * Resolved an issue with the Service Type configuration that caused an “Unable to connect to payment gateway” error during checkout on some servers.
+
 = 1.2.0 2024-12-19 =
  * Code quality improvements.
  * Tested on WooCommerce 9.4.3 and WordPress 6.7.1.

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024 DPO Group
+ * Copyright (c) 2025 DPO Group
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -31,7 +31,7 @@ require_once "$f/vendor/autoload.php";
 class WCGatewayDPO extends WC_Payment_Gateway
 {
 
-    public const VERSION_DPO = '1.2.0';
+    public const VERSION_DPO = '1.2.1';
 
     protected const LOGGING = 'logging';
 
@@ -680,7 +680,10 @@ class WCGatewayDPO extends WC_Payment_Gateway
             // Get product details
             $single_product = wc_get_product($product_id);
 
-            $serviceType = $product_data['service_type'][0] ?? $this->get_option('default_service_type');
+            $serviceType = !empty($product_data['service_type'][0])
+                ? $product_data['service_type'][0]
+                : $this->get_option('default_service_type');
+
 
             $serviceDesc = str_replace('&', 'and', $single_product->post->post_title);
 

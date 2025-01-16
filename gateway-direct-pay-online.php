@@ -5,17 +5,17 @@
  * Description: Receive payments using the African DPO Pay payments provider.
  * Author: DPO Group
  * Author URI: https://www.dpogroup.com/
- * Version: 1.2.0
+ * Version: 1.2.1
  * Requires at least: 6.2
- * Tested up to: 6.6.1
- * WC tested up to: 9.4.3
+ * Tested up to: 6.7.1
+ * WC tested up to: 9.5.2
  * WC requires at least: 6.0
  * Requires PHP: 8.0
  *
  * Developer: App Inlet (Pty) Ltd
  * Developer URI: https://www.appinlet.com/
  *
- * Copyright: © 2024 DPO Group
+ * Copyright: © 2025 DPO Group
  * License: GNU General Public License v3.0
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: dpo-group-for-woocommerce

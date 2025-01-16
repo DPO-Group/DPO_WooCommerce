@@ -62,7 +62,7 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType
             ? require $script_asset_path
             : [
                 'dependencies' => [],
-                'version'      => '1.2.0'
+                'version'      => '1.2.1'
             ];
         $script_url        = WC_Dpo_Payments::plugin_url() . $script_path;
 
