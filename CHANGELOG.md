@@ -1,5 +1,12 @@
 # Changelog
 
+## [[v1.2.1]](https://github.com/DPO-Group/DPO_WooCommerce/releases/tag/v1.2.1)
+
+### Fixed
+
+- Resolved an issue with the Service Type configuration that caused an “Unable to connect to payment gateway” error
+  during checkout on some servers.
+
 ## [[v1.2.0]](https://github.com/DPO-Group/DPO_WooCommerce/releases/tag/v1.2.0)
 
 ### Changed

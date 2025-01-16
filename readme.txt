@@ -4,7 +4,7 @@ Tags: ecommerce, e-commerce, woocommerce, automattic, payment, dpo, dpo pay, dpo
 Requires at least: 6.2
 Tested up to: 6.6
 Requires PHP: 8.0
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -43,6 +43,9 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
 4. WooCommerce Admin Product Page Settings
 
 == Changelog ==
+= 1.2.1 2025-01-16 =
+ * Resolved an issue with the Service Type configuration that caused an “Unable to connect to payment gateway” error during checkout on some servers.
+
 = 1.2.0 2024-12-19 =
  * Code quality improvements.
  * Verified compatibility with WooCommerce 9.4.3 and WordPress 6.7.1.
