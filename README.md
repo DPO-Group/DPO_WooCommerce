@@ -9,7 +9,7 @@ the [DPO Pay support team](https://dpogroup.com/contact-us/) should you require 
 
 1. **Download the Plugin**
     - Visit the [releases page](https://github.com/DPO-Group/DPO_WooCommerce/releases) and
-      download [dpo-group-for-woocommerce.zip](https://github.com/DPO-Group/DPO_WooCommerce/releases/download/v1.2.0/dpo-group-for-woocommerce.zip).
+      download [dpo-group-for-woocommerce.zip](https://github.com/DPO-Group/DPO_WooCommerce/releases/download/v1.2.1/dpo-group-for-woocommerce.zip).
 
 2. **Install the Plugin**
     - Log in to your WordPress Admin panel.
