@@ -1,5 +1,16 @@
 # Changelog
 
+## [[v1.2.2]](https://github.com/DPO-Group/DPO_WooCommerce/releases/tag/v1.2.2)
+
+### Fixed
+
+- Fixed an issue in the “Add Order Meta to Service” functionality, where entering an invalid Meta Key caused errors during checkout.
+- Fixed issues causing the cron job to fail under certain conditions.
+
+### Changed
+
+- Updated the default placeholder examples on the “Add Order Meta to Service” setting.  
+
 ## [[v1.2.1]](https://github.com/DPO-Group/DPO_WooCommerce/releases/tag/v1.2.1)
 
 ### Fixed

@@ -5,10 +5,10 @@
  * Description: Receive payments using the African DPO Pay payments provider.
  * Author: DPO Group
  * Author URI: https://www.dpogroup.com/
- * Version: 1.2.1
+ * Version: 1.2.2
  * Requires at least: 6.2
- * Tested up to: 6.7.1
- * WC tested up to: 9.5.2
+ * Tested up to: 6.8.1
+ * WC tested up to: 9.8.3
  * WC requires at least: 6.0
  * Requires PHP: 8.0
  *
@@ -94,13 +94,30 @@ function gdpo_woocommerce_dpo_init(): void
         'woocommerce_order_action_do_dpo_cron',
         [WCGatewayDpoCron::class, 'dpo_order_query_cron']
     );
+    add_filter('cron_schedules', 'dpo_every_ten_minutes');
     add_action('dpo_order_query_cron_admin', [WCGatewayDpoCron::class, 'dpo_order_query_cron']);
     add_action('dpo_order_query_cron_hook', [WCGatewayDpoCron::class, 'dpo_order_query_cron']);
 
     $nxt = wp_next_scheduled('dpo_order_query_cron_hook');
-    if (!$nxt) {
-        wp_schedule_event(time(), 'hourly', 'dpo_order_query_cron_hook');
+    // Remove old schedule (hourly)
+    if ($nxt) {
+        wp_unschedule_event($nxt, 'dpo_order_query_cron_hook');
     }
+
+    // Schedule event (10 min) if not already scheduled
+    if (!wp_next_scheduled('dpo_order_query_cron_hook')) {
+        wp_schedule_event(time(), 'dpo_every_ten_minutes', 'dpo_order_query_cron_hook');
+    }
+}
+
+function dpo_every_ten_minutes($schedules)
+{
+    $schedules['dpo_every_ten_minutes'] = [
+        'interval' => 600,
+        'display'  => __('DPO Pay Every 10 Minutes'),
+    ];
+
+    return $schedules;
 }
 
 /**

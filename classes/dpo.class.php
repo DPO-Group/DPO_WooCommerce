@@ -31,7 +31,7 @@ require_once "$f/vendor/autoload.php";
 class WCGatewayDPO extends WC_Payment_Gateway
 {
 
-    public const VERSION_DPO = '1.2.1';
+    public const VERSION_DPO = '1.2.2';
 
     protected const LOGGING = 'logging';
 
@@ -69,6 +69,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
     protected string $imageUrl;
     protected string $orderMetaService;
     protected string $orderMetaCompanyAccRef;
+    protected string $cronDebugMode;
 
     public function __construct()
     {
@@ -95,6 +96,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
         $this->imageUrl               = $this->get_option('imageUrl');
         $this->orderMetaService       = $this->get_option('orderMetaService');
         $this->orderMetaCompanyAccRef = $this->get_option('orderMetaCompanyAccRef');
+        $this->cronDebugMode          = $this->get_option('cronDebugMode');
 
         // Load the settings
         $settings = get_option('woocommerce_woocommerce_dpo_settings', false);
@@ -161,12 +163,12 @@ class WCGatewayDPO extends WC_Payment_Gateway
                         exit;
                     }
 
-                    $dpo              = new WCGatewayDPO();
+                    $dpoGateway       = new WCGatewayDPO();
                     $dpo_custom_table = $wpdb->prefix . 'dpo_order_data';
 
                     switch ($result) {
                         case '000': // Transaction Paid
-                            self::updateOrderStatus($order, $dpo);
+                            self::updateOrderStatus($order, $dpoGateway);
                             // Update the DPO table
                             $wpdb->query(
                                 $wpdb->prepare(
@@ -192,9 +194,9 @@ class WCGatewayDPO extends WC_Payment_Gateway
                             self::updateQuery(
                                 $requestData,
                                 $order,
-                                $dpo,
                                 $wpdb,
-                                $dpo_custom_table
+                                $dpo_custom_table,
+                                $dpoGateway
                             );
                             break;
                     }
@@ -210,14 +212,14 @@ class WCGatewayDPO extends WC_Payment_Gateway
      * Updated the order aorder status
      *
      * @param $order
-     * @param $dpo
+     * @param WCGatewayDPO $dpoGateway
      *
      * @return void
      */
-    public static function updateOrderStatus($order, $dpo): void
+    public static function updateOrderStatus($order, WCGatewayDPO $dpoGateway): void
     {
-        if ($order->get_status() !== $dpo->successful_status) {
-            switch ($dpo->successful_status) {
+        if ($order->get_status() !== $dpoGateway->successfulStatus) {
+            switch ($dpoGateway->successfulStatus) {
                 case 'on-hold':
                     $order->update_status(
                         'on-hold',
@@ -257,23 +259,23 @@ class WCGatewayDPO extends WC_Payment_Gateway
      *
      * @param $requestData
      * @param $order
-     * @param $dpo
      * @param $wpdb
      * @param $dpo_custom_table
+     * @param WCGatewayDPO $dpoGateway
      *
      * @return void
      */
     public static function updateQuery(
         $requestData,
         $order,
-        $dpo,
         $wpdb,
-        $dpo_custom_table
+        $dpo_custom_table,
+        WCGatewayDPO $dpoGateway,
     ): void {
         $error_code = $requestData->result;
         $error_desc = $requestData->resultExplanation;
 
-        if ($order->get_status() != $dpo->successful_status) {
+        if ($order->get_status() !== $dpoGateway->successfulStatus) {
             $order->update_status(
                 'failed ',
                 __(
@@ -293,7 +295,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                     $requestData->transactionToken
                 )
             );
-        } elseif ($order->get_status() == $dpo->successful_status) {
+        } elseif ($order->get_status() === $dpoGateway->successfulStatus) {
             $order->payment_complete();
         }
     }
@@ -464,7 +466,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                     'Add order meta to DPO services using \',\' to seperate meta keys (e.g. SERVICE_TYPE|META_KEY1,META_KEY2).',
                     'woocommerce'
                 ),
-                'placeholder' => __('For Example: 29161|billing_company,custom_meta_key,', 'woocommerce'),
+                'placeholder' => __('For Example: 29161|_billing_company,_custom_meta_key,', 'woocommerce'),
             ],
             'orderMetaCompanyAccRef' => [
                 'title'       => __('Add Order Meta to CompanyAccRef', 'woocommerce'),
@@ -473,7 +475,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
                     'Add order meta to DPO CompanyAccRef using \',\' to seperate meta keys (e.g. META_KEY1,META_KEY2).',
                     'woocommerce'
                 ),
-                'placeholder' => __('For Example: billing_company,custom_meta_key,', 'woocommerce'),
+                'placeholder' => __('For Example: _billing_company,_custom_meta_key,', 'woocommerce'),
             ],
             'dpo_logo'               => [
                 'title'       => __('Enable DPO Pay Logo', 'woocommerce'),
@@ -502,7 +504,15 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 'description' => __("Enable 'dpo_pay_order_create'", 'woocommerce'),
                 'desc_tip'    => true,
                 'default'     => 'no',
-            ]
+            ],
+            'cronDebugMode'           => [
+                'title'       => __('Cron Debug Mode', 'woocommerce'),
+                'label'       => __("Enable cron debug mode", 'woocommerce'),
+                'type'        => 'checkbox',
+                'description' => __("Activate/deactivate cron debug mode", 'woocommerce'),
+                'desc_tip'    => true,
+                'default'     => 'no',
+            ],
         ];
     }
 
@@ -623,8 +633,8 @@ class WCGatewayDPO extends WC_Payment_Gateway
                 update_post_meta($order_id, 'dpo_trans_token', $response['transToken']);
 
                 // Create DPO Pay gateway payment URL
-                $dpo        = new Dpo(false);
-                $paymentURL = $dpo->getPayUrl() . '?ID=' . $response['transToken'];
+                $dpoCommon  = new Dpo(false);
+                $paymentURL = $dpoCommon->getPayUrl() . '?ID=' . $response['transToken'];
 
                 $responseData = [
                     'redirect' => $paymentURL,
@@ -717,11 +727,13 @@ class WCGatewayDPO extends WC_Payment_Gateway
                     $serviceDesc = $order->get_meta($order_fields_array[0] ?? '');
                 }
 
-                $service .= '<Service>
+                if (!empty($serviceDesc)) {
+                    $service .= '<Service>
                             <ServiceType>' . $serviceType . '</ServiceType>
                             <ServiceDescription>' . $serviceDesc . '</ServiceDescription>
                             <ServiceDate>' . current_time('Y/m/d H:i') . '</ServiceDate>
                         </Service>';
+                }
             }
         }
 
@@ -769,9 +781,9 @@ class WCGatewayDPO extends WC_Payment_Gateway
         $woocommerce->session->paymentToken = $param;
 
         // Create xml and send request return response
-        $dpo = new Dpo(false);
+        $dpoCommon = new Dpo(false);
 
-        return $dpo->createToken($param);
+        return $dpoCommon->createToken($param);
     }
 
     /**
@@ -809,8 +821,14 @@ class WCGatewayDPO extends WC_Payment_Gateway
         $transactionToken = sanitize_text_field($_GET['TransactionToken']);
         $order            = wc_get_order($order_id);
 
+        if ($this->cronDebugMode === 'yes') {
+            wc_add_notice(__('This is a cron debugging test, the order is still pending.', 'woocommerce_dpo'), 'notice');
+            wp_redirect(wc_get_checkout_url());
+            exit();
+        }
+
         if (empty($transactionToken)) {
-            if ($order->get_status() == $this->successfulStatus) {
+            if ($order->get_status() === $this->successfulStatus) {
                 $order->payment_complete();
             } else {
                 wp_redirect(wc_get_cart_url());
@@ -818,9 +836,9 @@ class WCGatewayDPO extends WC_Payment_Gateway
             exit;
         }
         // Get verify token response from DPO Pay
-        $dpo = new Dpo(false);
+        $dpoCommon = new Dpo(false);
 
-        $response = $dpo->verifyToken(
+        $response = $dpoCommon->verifyToken(
             [
                 'companyToken' => $this->get_option('company_token'),
                 'transToken'   => $transactionToken,
@@ -916,7 +934,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
         $error_code = $response->Result[0];
         $error_desc = $response->ResultExplanation[0];
 
-        if ($order->get_status() != $this->successfulStatus) {
+        if ($order->get_status() !== $this->successfulStatus) {
             $order->update_status(
                 'failed ',
                 __(
@@ -941,7 +959,7 @@ class WCGatewayDPO extends WC_Payment_Gateway
             );
             wp_redirect(wc_get_checkout_url());
             exit;
-        } elseif ($order->get_status() == $this->successfulStatus) {
+        } elseif ($order->get_status() === $this->successfulStatus) {
             $order->payment_complete();
         }
     }
