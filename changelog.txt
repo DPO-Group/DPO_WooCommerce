@@ -1,4 +1,9 @@
 *** DPO Pay for WooCommerce Changelog ***
+= 1.2.2 2025-05-05 =
+ * Fixed an issue in the “Add Order Meta to Service” functionality, where entering an invalid Meta Key caused errors during checkout.
+ * Updated the default placeholder examples on the “Add Order Meta to Service” setting.
+ * Fixed issues causing the cron job to fail under certain conditions.
+
 = 1.2.1 2025-01-16 =
  * Resolved an issue with the Service Type configuration that caused an “Unable to connect to payment gateway” error during checkout on some servers.
 
