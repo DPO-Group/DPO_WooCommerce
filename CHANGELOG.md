@@ -1,15 +1,30 @@
 # Changelog
 
+## [[v1.3.0]](https://github.com/DPO-Group/DPO_WooCommerce/releases/tag/v1.3.0)
+
+### Added
+
+- Added plugin support for the markup API to accurately represent fees on WooCommerce orders.
+
+### Fixed
+
+- Resolved an issue with the cron debugging tool causing cancelled orders to not update.
+
+### Changed
+
+- Verified compatibility with WooCommerce 9.8.5 and WordPress 6.8.1.
+
 ## [[v1.2.2]](https://github.com/DPO-Group/DPO_WooCommerce/releases/tag/v1.2.2)
 
 ### Fixed
 
-- Fixed an issue in the “Add Order Meta to Service” functionality, where entering an invalid Meta Key caused errors during checkout.
+- Fixed an issue in the “Add Order Meta to Service” functionality, where entering an invalid Meta Key caused errors
+  during checkout.
 - Fixed issues causing the cron job to fail under certain conditions.
 
 ### Changed
 
-- Updated the default placeholder examples on the “Add Order Meta to Service” setting.  
+- Updated the default placeholder examples on the “Add Order Meta to Service” setting.
 
 ## [[v1.2.1]](https://github.com/DPO-Group/DPO_WooCommerce/releases/tag/v1.2.1)
 

@@ -1,5 +1,10 @@
 *** DPO Pay for WooCommerce Changelog ***
-= 1.2.2 2025-05-05 =
+= 1.3.0 2025-07-27 =
+ * Added plugin support for the markup API to accurately represent fees on WooCommerce orders.
+ * Resolved an issue with the cron debugging tool causing cancelled orders to not update.
+ * Verified compatibility with WooCommerce 9.8.5 and WordPress 6.8.1.
+
+ = 1.2.2 2025-05-05 =
  * Fixed an issue in the “Add Order Meta to Service” functionality, where entering an invalid Meta Key caused errors during checkout.
  * Updated the default placeholder examples on the “Add Order Meta to Service” setting.
  * Fixed issues causing the cron job to fail under certain conditions.
@@ -9,7 +14,7 @@
 
 = 1.2.0 2024-12-19 =
  * Code quality improvements.
- * Tested on WooCommerce 9.4.3 and WordPress 6.7.1.
+ * Verified compatibility with WooCommerce 9.4.3 and WordPress 6.7.1.
 
 = 1.1.6 - 2024-08-08 =
  * PHP 8.2 code quality standards

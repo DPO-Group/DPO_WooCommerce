@@ -1,10 +1,10 @@
 === DPO Pay for WooCommerce ===
 Contributors: appinlet
-Tags: ecommerce, e-commerce, woocommerce, automattic, payment, dpo, dpo pay, dpo group, app inlet, credit card, payment request, dpo pay by network
+Tags: e-commerce, woocommerce, dpo, dpo pay, dpo group, app inlet, dpo pay by network
 Requires at least: 6.2
-Tested up to: 6.6
+Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.2.2
+Stable tag: 1.3.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -43,7 +43,13 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
 4. WooCommerce Admin Product Page Settings
 
 == Changelog ==
-= 1.2.2 2025-05-05 =
+
+= 1.3.0 2025-07-27 =
+ * Added plugin support for the markup API to accurately represent fees on WooCommerce orders.
+ * Resolved an issue with the cron debugging tool causing cancelled orders to not update.
+ * Verified compatibility with WooCommerce 9.8.5 and WordPress 6.8.1.
+
+ = 1.2.2 2025-05-05 =
  * Fixed an issue in the “Add Order Meta to Service” functionality, where entering an invalid Meta Key caused errors during checkout.
  * Updated the default placeholder examples on the “Add Order Meta to Service” setting.
  * Fixed issues causing the cron job to fail under certain conditions.
@@ -51,29 +57,4 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
 = 1.2.1 2025-01-16 =
  * Resolved an issue with the Service Type configuration that caused an “Unable to connect to payment gateway” error during checkout on some servers.
 
-= 1.2.0 2024-12-19 =
- * Code quality improvements.
- * Verified compatibility with WooCommerce 9.4.3 and WordPress 6.7.1.
-
-= 1.1.6 - 2024-08-08 =
- * PHP 8.2 code quality standards
- * Bug fixes and improvements
- * Tested on WooCommerce 9.1.4, PHP 8.2 and WordPress 6.6.1.
-
-= 1.1.5 - 2024-05-28 =
- * Tested on WooCommerce 8.9.1, PHP 8.1 and WordPress 6.5.3.
-
-= 1.1.4 - 2024-01-04 =
- * Tested on WooCommerce 8.4.0 and Wordpress 6.4.
- * Add support for HPOS.
- * Decline transactions if the reference and order ID don't match.
- * Amend Return and Cancel Urls for better compatibility.
- * Add DPO Pay order filter.
- * Change Product Invocation Method for better compatibility.
-
-= 1.1.3 - 2023-04-26 =
- * Tested on WooCommerce 7.6.0 and Wordpress 6.2.
- * Add support for WooCommerce Blocks.
- * Bug fixes and improvements.
-
-[See changelog for all versions](https://raw.githubusercontent.com/DPO-Group/DPO_WooCommerce/master/changelog.txt).
+[See changelog for all versions](https://raw.githubusercontent.com/DPO-Group/DPO_WooCommerce/master/CHANGELOG.md).
