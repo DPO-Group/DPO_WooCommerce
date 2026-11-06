@@ -4,17 +4,17 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit84387fc77b7077c1502ddcd7413e0837
+class ComposerStaticInit6b0ae3a6f084643b025a9a3ccefa8d10
 {
     public static $prefixLengthsPsr4 = array (
-        'D' => 
+        'D' =>
         array (
             'Dpo\\Common\\' => 11,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Dpo\\Common\\' => 
+        'Dpo\\Common\\' =>
         array (
             0 => __DIR__ . '/..' . '/dpo/dpo-pay-common/src',
         ),
@@ -27,9 +27,9 @@ class ComposerStaticInit84387fc77b7077c1502ddcd7413e0837
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit84387fc77b7077c1502ddcd7413e0837::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit84387fc77b7077c1502ddcd7413e0837::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit84387fc77b7077c1502ddcd7413e0837::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit6b0ae3a6f084643b025a9a3ccefa8d10::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit6b0ae3a6f084643b025a9a3ccefa8d10::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit6b0ae3a6f084643b025a9a3ccefa8d10::$classMap;
 
         }, null, ClassLoader::class);
     }

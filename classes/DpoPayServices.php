@@ -1,4 +1,11 @@
 <?php
+/*
+ * Copyright (c) 2026 DPO Group
+ *
+ * Author: App Inlet (Pty) Ltd
+ *
+ * Released under the GNU General Public License
+ */
 
 /**
  * DPO Pay Services Class
@@ -16,6 +23,7 @@ class DpoPayServices extends WCGatewayDPO {
 	 *
 	 * @param WC_Order                $order The WooCommerce order object.
 	 * @param SimpleXMLElement|string $response The response from DPO Pay containing markup fee data.
+	 *
 	 * @return void
 	 */
 	public function addMarkupFeeToOrder( WC_Order $order, SimpleXMLElement|string $response ): void {
@@ -46,6 +54,7 @@ class DpoPayServices extends WCGatewayDPO {
 
 	/**
 	 * @param WC_Order $order
+	 *
 	 * @return string
 	 */
 	public function getBackUrl( WC_Order $order ): string {
@@ -54,6 +63,7 @@ class DpoPayServices extends WCGatewayDPO {
 		} else {
 			$backUrl = esc_url( $order->get_cancel_order_url() );
 		}
+
 		return $backUrl;
 	}
 
@@ -65,9 +75,9 @@ class DpoPayServices extends WCGatewayDPO {
 	 * @return string
 	 */
 	public function getCompanyref( string $companyAccRef, WC_Order $order ): string {
-		if ( $companyAccRef != '' ) {
+		if ( $companyAccRef !== '' ) {
 			$order_fields_array = explode( ',', $companyAccRef ); // Split order_field_meta into array if applicable
-			if ( key_exists( '1', $order_fields_array ) ) {
+			if ( array_key_exists( '1', $order_fields_array ) ) {
 				// Check if multiple meta keys were supplied
 				$companyAccRef = '';
 				foreach ( $order_fields_array as $order_field ) {
@@ -88,6 +98,7 @@ class DpoPayServices extends WCGatewayDPO {
 
 	/**
 	 * @param string $response
+	 *
 	 * @return SimpleXMLElement|string
 	 */
 	public function extractResponse( string $response ): string|SimpleXMLElement {
@@ -97,6 +108,7 @@ class DpoPayServices extends WCGatewayDPO {
 		} catch ( Exception $exception ) {
 			self::doLogging( 'Exception: ' . $exception->getMessage() );
 		}
+
 		return $result;
 	}
 
@@ -105,14 +117,15 @@ class DpoPayServices extends WCGatewayDPO {
 	 * @param array    $order_fields
 	 * @param WC_Order $order
 	 * @param string   $service
+	 *
 	 * @return string
 	 */
 	protected function get_service( array $order_fields, WC_Order $order, string $service ): string {
-		if ( array_key_exists( '0', $order_fields ) && key_exists( '1', $order_fields ) ) {
+		if ( array_key_exists( '0', $order_fields ) && array_key_exists( '1', $order_fields ) ) {
 			// Check orderMetaService was valid
 			$serviceType = $order_fields['0'];
 			$serviceDesc = $order_fields['1'];
-			if ( $serviceType != '' && $serviceDesc != '' ) {
+			if ( $serviceType !== '' && $serviceDesc !== '' ) {
 				// Split order_field_meta into array if applicable
 
 				$order_fields_array = explode( ',', $serviceDesc );
@@ -132,6 +145,7 @@ class DpoPayServices extends WCGatewayDPO {
 				}
 			}
 		}
+
 		return $service;
 	}
 }

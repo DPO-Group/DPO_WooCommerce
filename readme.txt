@@ -2,9 +2,9 @@
 Contributors: appinlet
 Tags: e-commerce, woocommerce, dpo, dpo pay, dpo group, app inlet, dpo pay by network
 Requires at least: 6.2
-Tested up to: 6.8
+Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -44,6 +44,15 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
 
 == Changelog ==
 
+= 1.4.0 2026-11-06 =
+ * Added the TransactionSource tag to the create token request.
+ * Fixed order meta handling for stores using high-performance order storage.
+ * Fixed a fatal error occurring before the plugin settings had been saved.
+ * Fixed currency code comparison so that regional aliases are normalised.
+ * Updated the plugin for full compatibility with PHP 8.3 and the supported WooCommerce logger.
+ * Improved escaping and sanitisation of administrative notices and request parameters.
+ * Important security update: We recommend all merchants update.
+
 = 1.3.1 2025-10-17 =
  * Updated the Common Library to resolve the defaulted test service description issue.
  * Verified compatibility with WooCommerce 10.2.2 and WordPress 6.8.3.
@@ -57,8 +66,5 @@ Need help to configure this plugin? Feel free to connect with our DPO Pay Suppor
  * Fixed an issue in the “Add Order Meta to Service” functionality, where entering an invalid Meta Key caused errors during checkout.
  * Updated the default placeholder examples on the “Add Order Meta to Service” setting.
  * Fixed issues causing the cron job to fail under certain conditions.
-
-= 1.2.1 2025-01-16 =
- * Resolved an issue with the Service Type configuration that caused an “Unable to connect to payment gateway” error during checkout on some servers.
 
 [See changelog for all versions](https://raw.githubusercontent.com/DPO-Group/DPO_WooCommerce/master/CHANGELOG.md).

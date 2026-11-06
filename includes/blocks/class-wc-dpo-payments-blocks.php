@@ -1,4 +1,11 @@
 <?php
+/*
+ * Copyright (c) 2026 DPO Group
+ *
+ * Author: App Inlet (Pty) Ltd
+ *
+ * Released under the GNU General Public License
+ */
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 
@@ -8,6 +15,7 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
  * @since 1.0.3
  */
 final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType {
+
 
 
 	/**
@@ -60,7 +68,7 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType {
 			? require $script_asset_path
 			: array(
 				'dependencies' => array(),
-				'version'      => '1.3.0',
+				'version'      => '1.4.0',
 			);
 		$script_url        = WC_Dpo_Payments::plugin_url() . $script_path;
 
@@ -94,15 +102,9 @@ final class WC_Gateway_Dpo_Blocks_Support extends AbstractPaymentMethodType {
 		$parent_data = parent::get_payment_method_data();
 
 		$child_data = array(
-			'title'       => $this->gateway->get_option( 'title' ) != null ? $this->gateway->get_option(
-				'title'
-			) : $this->get_setting( 'title' ),
-			'description' => $this->gateway->get_option( 'description' ) != '' ? $this->gateway->get_option(
-				'description'
-			) : $this->get_setting( 'description' ),
-			'button_text' => $this->gateway->get_option( 'button_text' ) != '' ? $this->gateway->get_option(
-				'button_text'
-			) : 'Pay Now',
+			'title'       => $this->gateway->get_option( 'title' ) ?? $this->get_setting( 'title' ),
+			'description' => $this->gateway->get_option( 'description' ) ?: $this->get_setting( 'description' ),
+			'button_text' => $this->gateway->get_option( 'button_text' ) ?: 'Pay Now',
 			'icons'       => $this->gateway->get_block_icon(),
 			'pluginurl'   => trailingslashit( plugins_url( null, __DIR__ ) ) . '../assets/images/',
 			'supports'    => array_filter( $this->gateway->supports, array( $this->gateway, 'supports' ) ),

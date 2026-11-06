@@ -5,17 +5,17 @@
  * Description: Receive payments using the African DPO Pay payments provider.
  * Author: DPO Group
  * Author URI: https://www.dpogroup.com/
- * Version: 1.3.1
+ * Version: 1.4.0
  * Requires at least: 6.2
- * Tested up to: 6.8.3
- * WC tested up to: 10.2.2
+ * Tested up to: 7.1
+ * WC tested up to: 11.2.2
  * WC requires at least: 6.0
  * Requires PHP: 8.0
  *
  * Developer: App Inlet (Pty) Ltd
  * Developer URI: https://www.appinlet.com/
  *
- * Copyright: © 2025 DPO Group
+ * Copyright: © 2026 DPO Group
  * License: GNU General Public License v3.0
  * License URI: http://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: dpo-group-for-woocommerce
@@ -24,9 +24,6 @@
 use Automattic\WooCommerce\Utilities\FeaturesUtil;
 
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
-
-global $woothemes;
-$woothemes = 'woothemes';
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,9 +34,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
 	deactivate_plugins( plugin_basename( __FILE__ ) );
 	wp_die(
-		"<strong>DPO Pay</strong> requires <strong>WooCommerce</strong> plugin to work normally. Please activate it or install it from <a href=\"http://wordpress.org/plugins/woocommerce/\" target=\"_blank\">here</a>.<br /><br />Back to the WordPress <a href='" . esc_url(
-			get_admin_url( null, 'plugins.php' )
-		) . "'>Plugins page</a>."
+		wp_kses_post(
+			sprintf(
+					/* translators: 1: plugins page URL */
+				'<strong>DPO Pay</strong> requires <strong>WooCommerce</strong> to be installed and active. <a href="%1$s">Return to Plugins</a>.',
+				esc_url( get_admin_url( null, 'plugins.php' ) )
+			)
+		)
 	);
 }
 
@@ -124,9 +125,10 @@ function dpo_every_ten_minutes( $schedules ) {
 function gdpo_delete_dbo_custom_order_table(): void {
 	global $wpdb;
 	$dpo_table_name = $wpdb->prefix . 'dpo_order_data';
-	$sql            = "drop table if exists $dpo_table_name";
-	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-	$wpdb->query( $sql );
+	// MySQL does not support parameterised DDL statements;
+	// $dpo_table_name is derived solely from $wpdb->prefix (trusted).
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	$wpdb->query( "DROP TABLE IF EXISTS `{$dpo_table_name}`" ); // backtick-quote for safety
 }
 
 /**
@@ -135,12 +137,11 @@ function gdpo_delete_dbo_custom_order_table(): void {
  * @return void
  */
 function gdpo_custom_tab_options_tab(): void {
-	global $woothemes;
 	?>
 	<ul>
 		<li class="custom_tab"><a href="#dpo_service_tab_data">
 				<?php
-				esc_html_e( 'DPO Service Type', $woothemes );
+				esc_html_e( 'DPO Service Type', 'dpo-group-for-woocommerce' );
 				?>
 			</a></li>
 	</ul>
@@ -156,7 +157,6 @@ add_action( 'woocommerce_product_write_panel_tabs', 'gdpo_custom_tab_options_tab
  */
 function gdpo_custom_tab_options(): void {
 	global $post;
-	global $woothemes;
 
 	$gdpo_custom_tab_options = array(
 		'service_type' => get_post_meta( $post->ID, 'service_type', true ),
@@ -171,7 +171,7 @@ function gdpo_custom_tab_options(): void {
 			<p class="form-field">
 				<label>
 					<?php
-					esc_html_e( 'Service Type:', $woothemes );
+					esc_html_e( 'Service Type:', 'dpo-group-for-woocommerce' );
 					?>
 				</label>
 				<input type="text" name="service_type" value="
@@ -180,7 +180,7 @@ function gdpo_custom_tab_options(): void {
 				?>
 				" placeholder="
 				<?php
-				esc_html_e( 'For example: 45', $woothemes );
+				esc_html_e( 'For example: 45', 'dpo-group-for-woocommerce' );
 				?>
 				"/>
 			</p>
@@ -217,6 +217,7 @@ function gdpo_process_product_meta_custom_tab( $post_id ): void {
 				echo '</div>';
 			}
 		);
+
 		return;
 	}
 
@@ -232,6 +233,7 @@ add_action( 'woocommerce_process_product_meta', 'gdpo_process_product_meta_custo
  * Registers WooCommerce Blocks integration.
  */
 class WC_Dpo_Payments {
+
 
 
 	/**

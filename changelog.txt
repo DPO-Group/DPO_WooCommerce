@@ -1,4 +1,17 @@
 *** DPO Pay for WooCommerce Changelog ***
+= 1.4.0 2026-11-06 =
+ * Added the TransactionSource tag to the create token request.
+ * Fixed order meta handling for stores using high-performance order storage.
+ * Fixed a fatal error occurring before the plugin settings had been saved.
+ * Fixed currency code comparison so that regional aliases are normalised.
+ * Updated the plugin for full compatibility with PHP 8.3 and the supported WooCommerce logger.
+ * Improved escaping and sanitisation of administrative notices and request parameters.
+ * Important security update: We recommend all merchants update.
+
+= 1.3.1 2025-10-17 =
+ * Updated the Common Library to resolve the defaulted test service description issue.
+ * Verified compatibility with WooCommerce 10.2.2 and WordPress 6.8.3.
+
 = 1.3.0 2025-07-27 =
  * Added plugin support for the markup API to accurately represent fees on WooCommerce orders.
  * Resolved an issue with the cron debugging tool causing cancelled orders to not update.

@@ -1,4 +1,11 @@
 <?php
+/*
+ * Copyright (c) 2026 DPO Group
+ *
+ * Author: App Inlet (Pty) Ltd
+ *
+ * Released under the GNU General Public License
+ */
 
 /**
  * DPO Pay Gateway Settings Class
@@ -11,19 +18,20 @@
 class DpoPaySettings {
 
 
+
 	/**
 	 * Payment icons array.
 	 *
-	 * @var array
+	 * @var object
 	 */
-	private $payment_icons;
+	private object $payment_icons;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param array $payment_icons array to get payment icons.
+	 * @param object $paymentIcons object to get payment icons.
 	 */
-	public function __construct( $paymentIcons ) {
+	public function __construct( object $paymentIcons ) {
 		$this->payment_icons = $paymentIcons;
 	}
 
