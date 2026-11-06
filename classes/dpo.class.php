@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 DPO Group
+ * Copyright (c) 2026 DPO Group
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -33,7 +33,7 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 
 
 
-	public const VERSION_DPO = '1.3.1';
+	public const VERSION_DPO = '1.4.0';
 
 	protected const LOGGING = 'logging';
 
@@ -115,13 +115,10 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 		if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) ) {
 			add_action(
 				'woocommerce_update_options_payment_gateways_' . $this->id,
-				array(
-					&$this,
-					'process_admin_options',
-				)
+				array( $this, 'process_admin_options' )
 			);
 		} else {
-			add_action( 'woocommerce_update_options_payment_gateways', array( &$this, 'process_admin_options' ) );
+			add_action( 'woocommerce_update_options_payment_gateways', array( $this, 'process_admin_options' ) );
 		}
 
 		/**
@@ -169,7 +166,6 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 	 *
 	 * @return void
 	 */
-	#[NoReturn]
 	public static function check_dpo_notify(): void {
 		global $wpdb;
 
@@ -178,30 +174,75 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 			try {
 				$data = new SimpleXMLElement( $pushData );
 				if ( ! empty( $data->TransactionToken ) && ! empty( $data->CompanyRef ) ) {
-					// Return OK to DPO
-					echo 'OK';
+					$order_id         = absint( (string) $data->CompanyRef );
+					$transactionToken = sanitize_text_field( (string) $data->TransactionToken );
+					$order            = wc_get_order( $order_id );
 
-					// Get the transaction information
-					$order_id          = $data->CompanyRef;
-					$transactionToken  = $data->TransactionToken;
-					$result            = $data->Result;
-					$resultExplanation = $data->ResultExplanation;
-
-					$order      = wc_get_order( $order_id );
-					$order_paid = $order && $order->is_paid();
-
-					// If order is already paid exit
-					if ( $order_paid ) {
+					if ( ! $order ) {
+						self::doLogging( 'Notify rejected: order not found for CompanyRef ' . $order_id );
 						exit;
 					}
 
-					$dpoGateway       = new WCGatewayDPO();
-					$dpo_custom_table = $wpdb->prefix . 'dpo_order_data';
+					if ( $order->is_paid() ) {
+						echo 'OK';
+						exit;
+					}
 
-					switch ( $result ) {
+					$storedTransactionToken = sanitize_text_field( (string) $order->get_meta( 'dpo_trans_token', true ) );
+					if ( empty( $storedTransactionToken ) || $storedTransactionToken !== $transactionToken ) {
+						self::doLogging( 'Notify rejected: transaction token mismatch for order ' . $order_id );
+						exit;
+					}
+
+					$dpoGateway  = new WCGatewayDPO();
+					$dpoCommon   = new Dpo( false );
+					$dpoServices = new DpoPayServices();
+
+					$verifiedResponse = $dpoCommon->verifyToken(
+						array(
+							'companyToken' => $dpoGateway->get_option( 'company_token' ),
+							'transToken'   => $transactionToken,
+						)
+					);
+
+					if ( empty( $verifiedResponse ) ) {
+						self::doLogging( 'Notify rejected: unable to verify transaction token for order ' . $order_id );
+						exit;
+					}
+
+					$verifiedResponse = $dpoServices->extractResponse( $verifiedResponse );
+					if ( ! $verifiedResponse instanceof SimpleXMLElement ) {
+						self::doLogging( 'Notify rejected: invalid verification response for order ' . $order_id );
+						exit;
+					}
+
+					$verifiedResult     = self::getXmlValue( $verifiedResponse, array( 'Result' ) );
+					$verifiedCompanyRef = absint( self::getXmlValue( $verifiedResponse, array( 'CompanyRef' ) ) );
+					$verifiedToken      = self::getXmlValue( $verifiedResponse, array( 'TransactionToken', 'TransToken' ) );
+					$verifiedAmount     = self::getXmlValue(
+						$verifiedResponse,
+						array( 'PaymentAmount', 'TransactionAmount', 'Amount' )
+					);
+					$verifiedCurrency   = self::getXmlValue(
+						$verifiedResponse,
+						array( 'PaymentCurrency', 'TransactionCurrency', 'Currency' )
+					);
+					$resultExplanation  = self::getXmlValue( $verifiedResponse, array( 'ResultExplanation' ) );
+					$dpo_custom_table   = $wpdb->prefix . 'dpo_order_data';
+
+					if (
+							$verifiedResult === ''
+							|| $verifiedCompanyRef !== $order_id
+							|| ( ! empty( $verifiedToken ) && $verifiedToken !== $transactionToken )
+							|| ! self::verifiedTransactionMatchesOrder( $order, $verifiedAmount, $verifiedCurrency )
+					) {
+						self::doLogging( 'Notify rejected: verified transaction did not match order ' . $order_id );
+						exit;
+					}
+
+					switch ( $verifiedResult ) {
 						case '000': // Transaction Paid
 							self::updateOrderStatus( $order, $dpoGateway );
-							// Update the DPO table
 							$wpdb->query(
 								$wpdb->prepare(
 									"UPDATE $dpo_custom_table
@@ -220,7 +261,7 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 						case '901': // Declined
 						default:
 							$requestData                    = new stdClass();
-							$requestData->result            = $result;
+							$requestData->result            = $verifiedResult;
 							$requestData->resultExplanation = $resultExplanation;
 							$requestData->transactionToken  = $transactionToken;
 							self::updateQuery(
@@ -232,12 +273,86 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 							);
 							break;
 					}
+
+					echo 'OK';
 				}
 			} catch ( Exception $exception ) {
 				self::doLogging( 'Exception: ' . $exception->getMessage() );
 			}
 		}
 		exit;
+	}
+
+	/**
+	 * Get the first non-empty XML value from a list of possible field names.
+	 *
+	 * @param SimpleXMLElement $xml
+	 * @param array            $fields
+	 *
+	 * @return string
+	 */
+	protected static function getXmlValue( SimpleXMLElement $xml, array $fields ): string {
+		foreach ( $fields as $field ) {
+			if ( isset( $xml->$field ) ) {
+				$value = trim( (string) $xml->$field );
+				if ( $value !== '' ) {
+					return $value;
+				}
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Validate that the verified transaction matches the WooCommerce order.
+	 *
+	 * @param WC_Order $order
+	 * @param string   $verifiedAmount
+	 * @param string   $verifiedCurrency
+	 *
+	 * @return bool
+	 */
+	protected static function verifiedTransactionMatchesOrder(
+		WC_Order $order,
+		string $verifiedAmount,
+		string $verifiedCurrency
+	): bool {
+		$orderCurrency    = self::normalizeCurrencyCode( $order->get_currency() );
+		$verifiedCurrency = self::normalizeCurrencyCode( $verifiedCurrency );
+
+		if ( $verifiedCurrency !== '' && $verifiedCurrency !== $orderCurrency ) {
+			return false;
+		}
+
+		if ( $verifiedAmount !== '' ) {
+			$orderAmount    = (float) wc_format_decimal( $order->get_total(), wc_get_price_decimals() );
+			$verifiedAmount = (float) wc_format_decimal( $verifiedAmount, wc_get_price_decimals() );
+
+			if ( abs( $orderAmount - $verifiedAmount ) > 0.01 ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Normalize DPO currency aliases to the WooCommerce currency code.
+	 *
+	 * @param string $currency
+	 *
+	 * @return string
+	 */
+	protected static function normalizeCurrencyCode( string $currency ): string {
+		switch ( strtoupper( $currency ) ) {
+			case 'CFA':
+				return 'XOF';
+			case 'MK':
+				return 'MWK';
+			default:
+				return strtoupper( $currency );
+		}
 	}
 
 	/**
@@ -341,8 +456,8 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 	 * @return void
 	 */
 	protected static function doLogging( $message ): void {
-		if ( self::$logging ) {
-			self::$logger->add( 'dpo_order', $message );
+		if ( self::$logging && self::$logger instanceof WC_Logger_Interface ) {
+			self::$logger->debug( $message, array( 'source' => 'dpo_order' ) );
 		}
 	}
 
@@ -356,7 +471,7 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 			'dpo-icon-script',
 			$this->get_plugin_url() . '/assets/js/dpoIcons.js',
 			array(),
-			'1.3.0',
+			'1.4.0',
 			true
 		);
 	}
@@ -453,7 +568,7 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 		}
 
 		// Merge parent response with the current response if needed
-		if ( $parent_response['result'] === 'fail' ) {
+		if ( is_array( $parent_response ) && ( $parent_response['result'] ?? '' ) === 'fail' ) {
 			return $parent_response;
 		}
 
@@ -474,9 +589,7 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 	public function before_payment( $order_id ): array|string {
 		global $woocommerce;
 
-		if ( self::$logging !== false ) {
-			self::$logger->add( 'dpo_order', 'Before Payment: ' );
-		}
+		self::doLogging( 'Before Payment' );
 
 		$order = new WC_Order( $order_id );
 
@@ -522,7 +635,7 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 
 		$order_fields = explode( '|', $this->orderMetaService ); // Split orderMetaService into array
 
-		self::doLogging( 'Order fields: ' . json_encode( $order_fields ) );
+		self::doLogging( 'Order fields: ' . wp_json_encode( $order_fields ) );
 
 		$service = $dpoServices->get_service( $order_fields, $order, $service );
 
@@ -555,16 +668,24 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 			'ptl'               => $this->ptl ?? '',
 			'paymentCurrency'   => $this->check_woocommerce_currency( $order->get_currency() ),
 			'companyAccRef'     => $companyAccRef,
+			'transactionSource' => 'woocommerce',
 		);
 
-		if ( self::$logging ) {
-			self::$logger->add( 'dpo_order', 'Params: ' . json_encode( $param ) );
-		}
+		// Log a non-sensitive summary only: the full array holds the company token and shopper details.
+		self::doLogging(
+			sprintf(
+				'Create token params: order %s, company token %s, amount %s %s',
+				$order_id,
+				empty( $param['companyToken'] ) ? 'missing' : 'set',
+				$param['paymentAmount'],
+				$param['paymentCurrency']
+			)
+		);
 
 		// Load the settings
-		$settings = get_option( 'woocommerce_woocommerce_dpo_settings', false );
+		$settings = get_option( 'woocommerce_woocommerce_dpo_settings', array() );
 
-		if ( $settings['order_filter'] === 'yes' ) {
+		if ( ( $settings['order_filter'] ?? '' ) === 'yes' ) {
 			$order = apply_filters( 'dpo_pay_order_create', $order );
 		}
 
@@ -605,8 +726,14 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 	 * @return string[]
 	 */
 	public function updatePostMeta( $response, $order_id ): array {
+		// Default to a failure response
+		$responseData = array(
+			'result'   => 'fail',
+			'redirect' => '',
+		);
+
 		if ( ! empty( $response ) ) {
-			if ( $response['result'] != '000' ) {
+			if ( $response['result'] !== '000' ) {
 				// Show error message
 				wc_add_notice(
 					__(
@@ -627,11 +754,11 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 				$transRef = $response['transRef'];
 				$order    = new WC_Order( $order_id );
 				$order->set_transaction_id( $transRef );
-				$order->save();
 
 				// Add record to order - will appear as custom field in admin
-				update_post_meta( $order_id, 'dpo_reference', $transRef );
-				update_post_meta( $order_id, 'dpo_trans_token', $response['transToken'] );
+				$order->update_meta_data( 'dpo_reference', $transRef );
+				$order->update_meta_data( 'dpo_trans_token', $response['transToken'] );
+				$order->save();
 
 				// Create DPO Pay gateway payment URL
 				$dpoCommon  = new Dpo( false );
@@ -643,16 +770,12 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 				);
 			} catch ( WC_Data_Exception $exception ) {
 				self::doLogging( 'Exception: ' . $exception->getMessage() );
+				// $responseData retains the default failure value
 			}
 		} else {
 			$response_message = wp_strip_all_tags( $response );
 			// Show error message
 			wc_add_notice( __( 'Payment error: ' . $response_message, 'dpo-group-for-woocommerce' ), 'error' );
-
-			$responseData = array(
-				'result'   => 'fail',
-				'redirect' => '',
-			);
 		}
 
 		return $responseData;
@@ -669,7 +792,7 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 		global $wpdb;
 		$dpo_custom_table = $wpdb->prefix . 'dpo_order_data';
 
-		$transactionToken = sanitize_text_field( wp_unslash( $_GET['TransactionToken'] ) );
+		$transactionToken = sanitize_text_field( wp_unslash( $_GET['TransactionToken'] ?? '' ) );
 		$order            = wc_get_order( $order_id );
 
 		if ( $this->cronDebugMode === 'yes' ) {
@@ -697,7 +820,7 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 		if ( ! empty( $response ) ) {
 			$response = $dpoServices->extractResponse( $response );
 
-			if ( $response->Result == '000' && $order->get_id() == (int) $response->CompanyRef ) {
+			if ( (string) $response->Result === '000' && $order->get_id() === (int) $response->CompanyRef ) {
 				$dpoServices->addMarkupFeeToOrder( $order, $response );
 
 				switch ( $this->successfulStatus ) {
@@ -720,13 +843,10 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 						);
 						$order->add_order_note( self::ORDER_APPROVED );
 						$order->add_order_note(
-							'Customer Credit Type: ' . $response->CustomerCreditType->__toString()
+							'Customer Credit Type: ' . (string) $response->CustomerCreditType
 						);
-						update_post_meta(
-							$order_id,
-							'customer_credit_type',
-							$response->CustomerCreditType->__toString()
-						);
+						$order->update_meta_data( 'customer_credit_type', (string) $response->CustomerCreditType );
+						$order->save();
 						$order->payment_complete();
 						break;
 					default:
@@ -736,13 +856,10 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 						);
 						$order->add_order_note( self::ORDER_APPROVAL_MSG );
 						$order->add_order_note(
-							'Customer Credit Type: ' . $response->CustomerCreditType->__toString()
+							'Customer Credit Type: ' . (string) $response->CustomerCreditType
 						);
-						update_post_meta(
-							$order_id,
-							'customer_credit_type',
-							$response->CustomerCreditType->__toString()
-						);
+						$order->update_meta_data( 'customer_credit_type', (string) $response->CustomerCreditType );
+						$order->save();
 						$order->payment_complete();
 
 						break;
@@ -767,6 +884,7 @@ class WCGatewayDPO extends WC_Payment_Gateway {
 	/**
 	 * @param $transactionToken
 	 * @param $order
+	 *
 	 * @return void
 	 */
 	protected function check_transaction_token( $transactionToken, $order ): void {

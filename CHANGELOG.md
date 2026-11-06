@@ -1,5 +1,26 @@
 # Changelog
 
+## [[v1.4.0]](https://github.com/DPO-Group/DPO_WooCommerce/releases/tag/v1.4.0)
+
+### Added
+
+- Added the TransactionSource tag to the create token request.
+
+### Fixed
+
+- Fixed order meta handling for stores using high-performance order storage.
+- Fixed a fatal error occurring before the plugin settings had been saved.
+- Fixed currency code comparison so that regional aliases are normalised.
+
+### Changed
+
+- Updated the plugin for full compatibility with PHP 8.3 and the supported WooCommerce logger.
+- Improved escaping and sanitisation of administrative notices and request parameters.
+
+### Security
+
+- Important security update: We recommend all merchants update.
+
 ## [[v1.3.1]](https://github.com/DPO-Group/DPO_WooCommerce/releases/tag/v1.3.1)
 
 ### Fixed

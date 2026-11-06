@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 DPO Group
+ * Copyright (c) 2026 DPO Group
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -16,6 +16,7 @@ require_once "$f/classes/DpoPayServices.php";
  * DPO cron class
  */
 class WCGatewayDpoCron extends WCGatewayDPO {
+
 
 
 	public const LOGGING            = 'logging';
@@ -34,7 +35,7 @@ class WCGatewayDpoCron extends WCGatewayDPO {
 		$dpoServices = new DpoPayServices();
 
 		// Load the settings
-		$settings  = get_option( 'woocommerce_woocommerce_dpo_settings', false );
+		$settings  = get_option( 'woocommerce_woocommerce_dpo_settings', array() );
 		$dpoCommon = new Dpo( false );
 		$gatewayId = $dpoGateway->id;
 
@@ -66,9 +67,9 @@ class WCGatewayDpoCron extends WCGatewayDPO {
 				continue;
 			}
 
-			$response = $dpoCommon->verifytoken(
+			$response = $dpoCommon->verifyToken(
 				array(
-					'companyToken' => $settings['company_token'],
+					'companyToken' => $settings['company_token'] ?? '',
 					'transToken'   => $transactionToken,
 				)
 			);
@@ -76,7 +77,7 @@ class WCGatewayDpoCron extends WCGatewayDPO {
 			if ( $response ) {
 				$response = $dpoServices->extractResponse( $response );
 				// Check selected order status workflow
-				if ( $response->Result == '000' && $order->get_status() !== $dpoGateway->successfulStatus ) {
+				if ( (string) $response->Result === '000' && $order->get_status() !== $dpoGateway->successfulStatus ) {
 					$statusMessage = '';
 					$orderNote     = '';
 					$dpoServices->addMarkupFeeToOrder( $order, $response );
@@ -122,7 +123,7 @@ class WCGatewayDpoCron extends WCGatewayDPO {
 		$logging = false;
 
 		// Load the settings
-		$settings = get_option( 'woocommerce_woocommerce_dpo_settings', false );
+		$settings = get_option( 'woocommerce_woocommerce_dpo_settings', array() );
 
 		if ( isset( $settings[ self::LOGGING ] ) && $settings[ self::LOGGING ] === 'yes' ) {
 			$logging = true;
@@ -131,8 +132,15 @@ class WCGatewayDpoCron extends WCGatewayDPO {
 		$logger = wc_get_logger();
 
 		if ( $logging ) {
-			$logger->add( 'dpo_cron', 'Starting DPO cron job' );
-			$logger->add( 'dpo_cron', 'Orders: ' . json_encode( $orders ) );
+			$logger->debug( 'Starting DPO cron job', array( 'source' => 'dpo_cron' ) );
+			$order_ids = array_map(
+				static fn( $order ) => $order instanceof WC_Order ? $order->get_id() : $order,
+				(array) $orders
+			);
+			$logger->debug(
+				sprintf( 'Pending orders to check: %d (IDs: %s)', count( $order_ids ), implode( ', ', $order_ids ) ),
+				array( 'source' => 'dpo_cron' )
+			);
 		}
 	}
 
@@ -143,24 +151,13 @@ class WCGatewayDpoCron extends WCGatewayDPO {
 	 * @return string|null
 	 */
 	protected static function get_transaction_token( wpdb $wpdb, mixed $order_id ): ?string {
-		$query = $wpdb->prepare(
-			"
-    SELECT meta_value
-    FROM {$wpdb->prefix}postmeta
-    WHERE meta_key = %s
-    AND post_id = %d
-",
-			'dpo_trans_token',
-			$order_id
-		);
-
-		$res = $wpdb->get_results( $query );
-
-		if ( ! empty( $res ) && isset( $res[0]->meta_value ) ) {
-			return sanitize_text_field( $res[0]->meta_value );
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return null;
 		}
+		$token = $order->get_meta( 'dpo_trans_token', true );
 
-		return null;
+		return $token !== '' ? sanitize_text_field( $token ) : null;
 	}
 
 	/**
@@ -182,7 +179,7 @@ class WCGatewayDpoCron extends WCGatewayDPO {
 			$order->add_order_note(
 				'Payment Failed: ' . $error_code . ', ' . $error_desc . '. Notice that the stock is NOT reduced. '
 			);
-		} elseif ( $currentStatus == $dpoGateway->successfulStatus ) {
+		} elseif ( $currentStatus === $dpoGateway->successfulStatus ) {
 			$order->payment_complete();
 		}
 	}
@@ -198,7 +195,7 @@ class WCGatewayDpoCron extends WCGatewayDPO {
 		global $theorder;
 
 		$payment_method = $theorder->get_payment_method();
-		if ( $payment_method == 'woocommerce_dpo' ) {
+		if ( $payment_method === 'woocommerce_dpo' ) {
 			$actions['do_dpo_cron'] = __( 'Run DPO Cron job', 'dpo-group-for-woocommerce' );
 		}
 
